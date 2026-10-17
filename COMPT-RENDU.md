@@ -179,3 +179,66 @@ Logs bruts : `test/results/porte-1.log` … `test/results/porte-10.log`. Les 5 s
 - Les symboles de couleur des atouts reposent sur le fallback système (absents du subset VT323) — le corps des cartes (7-10, V, D, A, chiffres) est 100 % dans le subset.
 - Audio headless : le contexte audio réel est créé par Chrome headless (vérifié porte 6) mais la sortie sonore n'est pas audible en test — la conformité « 0 erreur console + API complète » est ce qui est vérifié.
 - POC single-player local : aucun multi-joueurs, aucun serveur.
+
+## v2.0.0 — Corrections de l'audit L34K (tâche poker-chrono-v2-audit-fix, 2026-10-17)
+
+**Contexte.** L'audit L34K (black-box, 5 PoC exécutés) a prouvé 5 vecteurs de triche sur le v2 livré (115 695 o, sha256 `55364dc0…`). Objectif : les rendre non reproductibles via l'API publique, **sans toucher au barème verbatim/évaluateur** et **sans masquer les cartes IA** (tirage visible = règle du cahier).
+
+### Corrections appliquées (index.html : 115 695 o → 119 687 o, v2.0.0)
+
+1. **H1 (HIGH) — seed 32 bits recouvrable par brute-force 2^32 depuis le deck visible** (mulberry32 état 32 bits ; PoC : seed 1103544327 → deck 32/32).
+   - Partie réelle : seed **128 bits CSPRNG** (`crypto.getRandomValues(new Uint32Array(4))`) + PRNG **128 bits xoshiro128\*\*** ; streams dérivés shuffle/human/AI conservés (mêmes points d'appel).
+   - `G.lastSeed` **retiré du namespace public**.
+   - L'override entier `createGame({seed})` (portes, seeds 1000–1299) **conserve le chemin mulberry32 inchangé** → les valeurs des portes existantes restent valides.
+   - Corps `mulberry32` conservé tel quel (`a = (a + 0x6D2B79F5) | 0; … (t >>> 14) …`, L318–348).
+2. **H2 (HIGH) + M1 (MOYENNE) — `G.state` public/mutable** (score fabriqué en 2 lignes ; `G.state.timeLeft` + `G.tick(state, dt<0)` → temps infini).
+   - État de partie dans la **closure de l'UI** ; aucun `G.state`/`G.lastSeed` public mutable.
+   - `G` public = fonctions logiques pures + contrôles ; snapshots `G.UI.*` en **lecture seule** (deep clone).
+   - `G.tick(state, ms)` : garde `if (!Number.isFinite(ms) || ms < 0) return;` ; la UI tick via `performance.now()`.
+3. **M2 (MOYENNE) — best-score localStorage non validé** (`'abc'` → NaN → plus jamais de record ; `'999999'` → record gelé).
+   - Lecture : `Number.isFinite(parsedBest) && parsedBest >= 0 ? parsedBest : 0` (L1404–1405).
+4. **L1 (FAIBLE) — `innerHTML` sur les lignes de décomposition (PoC XSS).**
+   - Rendu 100 % `createElement`/`textContent` ; **zéro occurrence `innerHTML`** dans le fichier.
+5. **Version** → `'2.0.0'` (L632).
+
+Contraintes vérifiées après build : **119 687 o < 200 Ko**, **LF pur (0 CR)**, zéro dépendance externe, zéro surface réseau, `file://` standalone.
+
+### Nouvelles portes G11–G14 + rejouage des 5 PoC
+
+| Porte | Fichier | Vérifie | Résultat |
+|---|---|---|---|
+| G11 | `test/g11-noscore.mjs` | Fabrication de score via API publique impossible ; `tick` non-fini/négatif refusé ; snapshot UI immuable ; score IA final = barème du plateau final | 8 OK, 0 FAIL |
+| G12 | `test/g12-seed.mjs` | Entropie : 2 parties réelles ≠ decks ; même override 32 bits → deck identique ; seed non entier/négatif → chemin réel | 7 OK, 0 FAIL |
+| G13 | `test/g13-best.mjs` | best `'abc'`/`'-5'` → 0 avec records possibles ; `'999999'` → record réel écrit en fin de partie | 7 OK, 0 FAIL |
+| G14 | `test/g14-innertest.mjs` | Scan statique : zéro `innerHTML`, zéro dépendance externe, LF | 4 OK, 0 FAIL |
+| — | `test/poc-repro.mjs` | Rejoue les **5 PoC L34K** via l'API publique : tous échouent (H1 : 100 001 seeds mulberry32 testés, 0 deck identique au deck réel ; H2 : `G.state` absent → TypeError ; M1 : `timeLeft` inchangé ; M2 : `'abc'` → 0 puis record écrit ; L1 : 0 `innerHTML`) | FAILURES: 0 — **POCS NON REPRODUCTIBLES** |
+
+Les 10 portes existantes repassent après les corrections (dont 5 v1 inchangées) : G1 30 OK · G2 900 parties 0 erreur · G3 20 OK · G4 18 OK · G5 4 OK · G6 13 OK · G7 8 OK · G8 14 OK · G9 60 plateaux · G10 20 OK — **14/14 vertes**, logs `test/results/porte-1.log` … `porte-14.log` + `test/results/poc-repro.log`.
+
+### Tentatives (échecs inclus)
+
+1. **Patch P1 (H1) — 1er échec** : le marqueur anticipait un corps `mulberry32` avec `a >>> 7` ; le corps réel est `a = (a + 0x6D2B79F5) | 0`. Résolu par extraction de fonction entre marqueurs uniques (début `function mulberry32`, fin `4294967296;`).
+2. **Écriture du commentaire P9 bloquée** : le commentaire de patch contenait le token `innerHTML` (interdit dans le commentaire de la correction XSS) → reformulation sans le token.
+3. **g5-ui.mjs non modifié au 1er passage** : bloc cible `scores` vs `res` → inspection du texte réel puis re-patch exact.
+4. **Token `G.state` dans un commentaire g9** (référence à l'ancien état public) → reformulé.
+5. **Erreur d'expression sed** (`unknown command: ','`) lors d'une lecture de plage → remplacée par un marqueur textuel (`globalThis.G = `).
+6. **G11–G13 initiales écrites contre une API hypothétique** → réécrites sur l'API réelle (`G.start(state)`, 32 cartes, `state.deck` = 2 restes, `G.UI.*`).
+7. **G2 exit 1** : mauvais chemin de runner (`test/g2g4-headless.js` au lieu de `g2g4-headless.js` — le chemin est relatif à `test/`) → relance avec le bon chemin, verte.
+8. **G9 exit 1** : import direct de `cdp.mjs` sans runner (il n'exporte que `connect`/`evalJs`) + comparaison de plateaux incorrecte (30 cartes/plateau + 2 restes) → réécriture complète avec le pattern `run-headless.mjs` : 60 plateaux, somme des lignes = boardScore = barème.
+9. **G11 ❌ au 1er run corrigé** : `after` (timeLeft post-tick) lu *après* le tick positif de contrôle, donc déjà décrémenté → réordonnancement : capture `after` avant le tick `100` ms.
+10. **G12 ❌ au 1er run corrigé** : la référence in-page utilisait la variante composée `let t = (a += 0x6D2B79F5); … t ^ (t >>> 7)`, différente du corps réel du fichier (`a = (a + 0x6D2B79F5) | 0; … (t >>> 14)`) → copie du corps exact (L318–348) dans la référence.
+11. **poc-repro.mjs `REAL is not defined`** : guillemets simples imbriqués dans le template Node (le `<<REAL>>` entre guillemets fermait le literal externe) → deck cible injecté via `window.__targetDeck` dans un `evalJs` séparé.
+12. **Git non initialisé** (exit 128 aux vérifications initiales) → `git init -b main`, `core.autocrlf=false`, commit unique du livrable v2.0.0.
+
+### État final
+
+- `index.html` v2.0.0 : **119 687 o**, LF pur, zéro `innerHTML`, zéro dépendance, version `2.0.0` (L632).
+- Git : branch `main`, commit **`42f8061d8a5976ce75c0cbc4e7cb717a096b325c`** (répo initialisé pour l'occasion ; tout le contenu projet est dans ce commit).
+- **14/14 portes vertes** (10 existantes + G11–G14) ; **5 PoC L34K non reproductibles** via l'API publique.
+- 4RCH1V **non contacté** (consigne utilisateur explicite : « je gère les handoffs ») — handoff porté par NI4NI.
+
+### Limites / non vérifié
+
+- Preuve complète de l'irreproductibilité 2^128 : théorique (xoshiro128** sur état 128 bits CSPRNG) ; preuve empirique : 100 001 seeds mulberry32 testés contre le deck réel → 0 correspondance, et le deck d'une partie réelle n'est plus produit par le chemin mulberry32 (flux xoshiro128** distinct).
+- La porte G12 compare les decks complets (30 cartes visibles + 2 restes) reconstruits in-page avec le même algorithme de deck que le fichier.
+- Audio headless : sortie non audible (déjà documenté v2) ; le périmètre de cette phase est logique/sécurité.

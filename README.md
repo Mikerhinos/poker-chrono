@@ -132,3 +132,25 @@ node test/run-headless.mjs g5-run.mjs 9356      # P10 drag & drop smoke     → 
 ```
 
 `run-headless.mjs` démarre Chrome headless lui-même (CDP), exécute le test, nettoie. Les 5 scripts v1 (`g1-scores`, `g3-swap`, `g2g4-headless`, `g5-run`, `g5-ui`) sont **inchangés** et passent tels quels. Logs : `test/results/porte-1.log` … `porte-10.log`. Détails, commandes exactes et tentatives (échecs inclus) : `COMPT-RENDU.md` § v2.
+
+## v2.0.0 — corrections de l'audit L34K + 14 portes
+
+Corrections (sans toucher au barème verbatim/évaluateur, sans masquer les cartes IA) :
+
+- **Seed des parties réelles** : 128 bits CSPRNG (`crypto.getRandomValues`) + PRNG xoshiro128** — non recouvrable par brute-force 2^32 depuis le deck visible. L'override `createGame({seed})` 32 bits (mulberry32) est **inchangé** pour les portes ; `G.lastSeed` retiré de l'API publique.
+- **État de partie** : dans la closure de l'UI ; `G` public = fonctions pures + contrôles, snapshots `G.UI.*` lecture seule ; `G.tick` refuse `dt < 0` et les valeurs non-finies.
+- **best-score** : lecture validée (`Number.isFinite && >= 0`, sinon 0) — un score réel redevient un record.
+- **Rendu** : zéro `innerHTML` (100 % `createElement`/`textContent`).
+- **Version** : `2.0.0`.
+
+Nouvelles portes 11–14 :
+
+```bash
+node test/run-headless.mjs g11-noscore.mjs 9358  # API publique : fabrication de score impossible, tick gardé → 8 OK
+node test/run-headless.mjs g12-seed.mjs 9359     # entropie seed réel (128 bits) + déterminisme override → 7 OK
+node test/run-headless.mjs g13-best.mjs 9360     # best-score 'abc'/'-5' → 0, records possibles → 7 OK
+node test/g14-innertest.mjs                      # scan statique : zéro innerHTML/dépendance, LF → 4 OK
+node test/run-headless.mjs poc-repro.mjs 9361    # rejoue les 5 PoC L34K : tous non reproductibles
+```
+
+**14/14 portes vertes** (logs `test/results/porte-1.log` … `porte-14.log` + `poc-repro.log`), single-file **119 687 o** (< 200 Ko), LF, zéro dépendance externe. Détails, commandes exactes et toutes les tentatives (échecs inclus) : `COMPT-RENDU.md` § v2.0.0.
