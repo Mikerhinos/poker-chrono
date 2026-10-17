@@ -1,0 +1,23 @@
+  ok   deal : 32 cartes, toutes uniques
+  ok   deal : 15 + 15 + 2
+  ok   swap valide accepté — {"ok":true}
+  ok   swap valide : cellules 0 et 1 échangées
+  ok   swap valide : le reste du plateau inchangé
+  ok   swap valide : humanMoves incrémenté
+  ok   case identique : refus "self"
+  ok   case identique : plateau inchangé
+  ok   hors plateau : refus "out"
+  ok   hors plateau : plateau inchangé
+  ok   dépôts invalides (6 formes) → refus "invalid"
+  ok   dépôt undefined → refus "out" — {"ok":false,"reason":"out"}
+  ok   dépôts invalides : plateau inchangé
+  ok   non lancée : refus "not_running"
+  ok   tick jusqu’à terme
+  ok   terminée : refus "over"
+  ok   terminée : plateau inchangé
+  ok   simulation : 32 cartes uniques conservées
+  ok   simulation : plateaux toujours pleins (15+15)
+  ok   simulation : résultat cohérent (total = somme des lignes)
+
+[PORTE 3] 20 OK, 0 FAIL
+[PORTE 3] PORTE PASSÉE

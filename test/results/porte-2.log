@@ -1,0 +1,67 @@
+Chrome CDP prêt sur 127.0.0.1:9351 pour g2g4-headless.js
+  facile: score IA moyen 254.93, score humain moyen 44.55, victoires IA 289/300 (96.3%), humain 10, égalité 1, erreurs JS 0, scores humains distincts 27
+  normal: score IA moyen 311.47, score humain moyen 44.55, victoires IA 298/300 (99.3%), humain 2, égalité 0, erreurs JS 0, scores humains distincts 27
+  difficile: score IA moyen 371.87, score humain moyen 44.55, victoires IA 300/300 (100.0%), humain 0, égalité 0, erreurs JS 0, scores humains distincts 27
+
+  total : 900 parties en 104.1 s
+  ok   PORTE 2 : ≥ 900 parties jouées — 900 parties
+  ok   PORTE 2 : 0 erreur JS — 0 erreur(s)
+  ok   PORTE 4 : score IA moyen croissant — 254.93 < 311.47 < 371.87
+  ok   PORTE 4 : taux de victoire IA croissant — 96.3% < 99.3% < 100.0%
+  ok   PORTE 4 : scores non constants (≥ 5 valeurs distinctes par difficulté) — 27 / 27 / 27 valeurs distinctes
+  ok   PORTE 4 : pas d’égalités systématiques (≤ 50% égalités par difficulté) — égalités : 1, 0, 0 / 300
+
+[PORTE 2/4] 6 OK, 0 FAIL
+[PORTE 2/4] PORTE PASSÉE
+{
+  "total": 900,
+  "totalErrors": 0,
+  "wall": "104.1",
+  "results": {
+    "facile": {
+      "n": 300,
+      "errors": 0,
+      "avgHuman": 44.55,
+      "avgAI": 254.93333333333334,
+      "winAI": 0.9633333333333334,
+      "wins": {
+        "human": 10,
+        "ai": 289,
+        "draw": 1
+      },
+      "distinctHuman": 27,
+      "minHuman": 6,
+      "maxHuman": 320
+    },
+    "normal": {
+      "n": 300,
+      "errors": 0,
+      "avgHuman": 44.55,
+      "avgAI": 311.46666666666664,
+      "winAI": 0.9933333333333333,
+      "wins": {
+        "human": 2,
+        "ai": 298,
+        "draw": 0
+      },
+      "distinctHuman": 27,
+      "minHuman": 6,
+      "maxHuman": 320
+    },
+    "difficile": {
+      "n": 300,
+      "errors": 0,
+      "avgHuman": 44.55,
+      "avgAI": 371.8666666666667,
+      "winAI": 1,
+      "wins": {
+        "human": 0,
+        "ai": 300,
+        "draw": 0
+      },
+      "distinctHuman": 27,
+      "minHuman": 6,
+      "maxHuman": 320
+    }
+  }
+}

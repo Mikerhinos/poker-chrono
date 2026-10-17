@@ -1,0 +1,33 @@
+  ok   quinte flush 7-8-9-10-V pique — → quinte_flush (500)
+  ok   quatre d’as — → quatre (300)
+  ok   full RRRDD — → full (150)
+  ok   couleur sans quinte — → couleur (100)
+  ok   quinte (sans couleur) — → quinte (75)
+  ok   quinte 10-J-Q-D-A (A haute) — → quinte (75)
+  ok   brelan — → brelan (40)
+  ok   double paire — → double_paire (25)
+  ok   paire — → paire (10)
+  ok   carte haute — → carte_haute (2)
+  ok   pas de quinte enroulée (A-7-8-9-10) — → carte_haute (2)
+  ok   quatre (300) > full (150)
+  ok   ordre complet du barème
+  ok   éval de 4 cartes → erreur
+  ok   carte invalide (r=15) → erreur
+  ok   carte invalide (s=5) → erreur
+  ok   boardScore = 500+300+2 = 802 — → 802
+  ok   boardBreakdown 3 lignes étiquetées
+  ok   source evaluate5 identique poker-chrono ↔ poker-rush
+  ok   source rowScore identique poker-chrono ↔ poker-rush
+  ok   source boardScore identique poker-chrono ↔ poker-rush
+  ok   source boardBreakdown identique poker-chrono ↔ poker-rush
+  ok   source isFull identique poker-chrono ↔ poker-rush
+  ok   source isValidCard identique poker-chrono ↔ poker-rush
+  ok   const RANKS identique poker-chrono ↔ poker-rush
+  ok   const RANK_LABEL identique poker-chrono ↔ poker-rush
+  ok   const SUIT_LABEL identique poker-chrono ↔ poker-rush
+  ok   const SUIT_NAME identique poker-chrono ↔ poker-rush
+  ok   const HAND_SCORES identique poker-chrono ↔ poker-rush
+  ok   const HAND_LABEL identique poker-chrono ↔ poker-rush
+
+[PORTE 1] 30 OK, 0 FAIL
+[PORTE 1] PORTE PASSÉE

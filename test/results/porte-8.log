@@ -1,0 +1,17 @@
+  ok   zéro occurrence : URL http(s)://
+  ok   zéro occurrence : protocole // (protocol-relative)
+  ok   zéro occurrence : <script src=
+  ok   zéro occurrence : <link
+  ok   zéro occurrence : <img
+  ok   zéro occurrence : <iframe|<object|<embed|<video|<audio|<source
+  ok   zéro occurrence : @import
+  ok   zéro occurrence : url() non data:
+  ok   zéro occurrence : attribut src= (non data:/blob:/about:)
+  ok   zéro occurrence : fetch(/XMLHttpRequest/WebSocket
+  ok   zéro occurrence : import/export externe (module URL)
+  ok   2 polices embarquées en data:font/woff2;base64 — trouvées : 2
+  ok   aucun chargement de police externe (@font-face + src local) — @font-face : 2
+  ok   taille finale entre 100 et 200 Ko — 119687 octets
+
+[PORTE 8] 14 OK, 0 FAIL
+[PORTE 8] PORTE PASSÉE
