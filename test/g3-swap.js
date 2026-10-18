@@ -1,17 +1,32 @@
-// PORTE 3 — Mécanique du swap humain, testée explicitement (niveau logique).
+// PORTE 3 — Deal miroir (v2.1) + mécanique du swap humain (niveau logique).
+// Contrat miroir (D1.1 v2.1) : 52 cartes, 15 tirées, main joueur = main IA =
+// cette même sélection, 37 cartes non utilisées (aucune réserve jouable).
 import { loadLogic, makeChecker } from './lib.mjs';
 
 const G = loadLogic();
 const { check, summary } = makeChecker('PORTE 3');
 const snap = (b) => JSON.stringify(b);
 
-// État initial : 32 cartes uniques, 15 + 15 + 2, plateaux pleins.
+// --- Contrat miroir
 {
   const st = G.createGame({ seed: 42, time: 20 });
-  const all = [...st.boards.human.flat(), ...st.boards.ai.flat(), ...st.deck];
+  const h = st.boards.human, a = st.boards.ai;
+  const uniq52 = new Set([...h.flat(), ...a.flat(), ...st.deck].map((c) => c.r + ':' + c.s));
+  check('miroir : 52 cartes, 15 + 15 + 37, toutes uniques',
+    h.flat().length === 15 && a.flat().length === 15 && st.deck.length === 37 && uniq52.size === 52);
+  check('miroir : main joueur == main IA (même sélection)', snap(h) === snap(a));
+  check('miroir : aucune carte dupliquée dans les mains',
+    new Set(h.flat().map((c) => c.r + ':' + c.s)).size === 15);
+}
+{
+  // même seed → mêmes 15 cartes, aucune duplication (déterminisme du deal)
+  const s1 = G.createGame({ seed: 77, time: 20 });
+  const s2 = G.createGame({ seed: 77, time: 20 });
+  check('même seed → mêmes 15 cartes (joueur)', snap(s1.boards.human) === snap(s2.boards.human));
+  check('même seed → mêmes 15 cartes (IA, miroir)', snap(s1.boards.ai) === snap(s2.boards.ai));
+  const all = [...s1.boards.human.flat(), ...s1.boards.ai.flat(), ...s1.deck];
   const uniq = new Set(all.map((c) => c.r + ':' + c.s));
-  check('deal : 32 cartes, toutes uniques', all.length === 32 && uniq.size === 32);
-  check('deal : 15 + 15 + 2', st.boards.human.flat().length === 15 && st.boards.ai.flat().length === 15 && st.deck.length === 2);
+  check('aucune duplication dans le deal (67 cartes listées, 52 uniques : miroir)', all.length === 67 && uniq.size === 52);
 }
 
 // 1) Swap valide → les deux cartes sont échangées.
@@ -87,12 +102,12 @@ const snap = (b) => JSON.stringify(b);
   check('terminée : plateau inchangé', snap(st.boards.human) === before);
 }
 
-// 7) Invariants sur une partie simulée complète : plateaux toujours pleins, 32 cartes conservées.
+// 7) Invariants sur une partie simulée complète : plateaux toujours pleins (miroir), 52 cartes uniques (15 miroir + 37 non utilisées).
 {
   const { st } = G.simulateGame({ seed: 13, time: 10, difficulty: 'normal' });
   const all = [...st.boards.human.flat(), ...st.boards.ai.flat(), ...st.deck];
   const uniq = new Set(all.map((c) => c.r + ':' + c.s));
-  check('simulation : 32 cartes uniques conservées', all.length === 32 && uniq.size === 32);
+  check('simulation : 67 cartes listées, 52 uniques (miroir)', all.length === 67 && uniq.size === 52);
   check('simulation : plateaux toujours pleins (15+15)', st.boards.human.flat().length === 15 && st.boards.ai.flat().length === 15);
   check('simulation : résultat cohérent (total = somme des lignes)',
     st.result.human === G.boardScore(st.boards.human) && st.result.ai === G.boardScore(st.boards.ai));

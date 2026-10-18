@@ -121,9 +121,13 @@ function swapCells(board, i, j) {
       const j = Math.floor(rngShuffle() * (i + 1));
       const t = deck[i]; deck[i] = deck[j]; deck[j] = t;
     }
+    // v2.1 — DEAL MIROIR : les 15 cartes tirées forment la main du joueur
+    // ET celle de l'IA (même sélection, copies profondes) ; les 37 cartes
+    // restantes sont non utilisées (conservées en réserve d'audit, jamais jouées).
+    const humanRows = [deck.slice(0, 5), deck.slice(5, 10), deck.slice(10, 15)];
     const boards = {
-      human: [deck.slice(0, 5), deck.slice(5, 10), deck.slice(10, 15)],
-      ai: [deck.slice(15, 20), deck.slice(20, 25), deck.slice(25, 30)]
+      human: humanRows,
+      ai: humanRows.map((row) => row.map((c) => ({ r: c.r, s: c.s })))
     };
     return {
       difficulty,
@@ -132,7 +136,7 @@ function swapCells(board, i, j) {
       running: false,
       over: false,
       aiTimer: 0,
-      deck: deck.slice(30), // 2 cartes de réserve
+      deck: deck.slice(15), // v2.1 : 37 cartes non utilisées (audit, jamais jouées)
       boards,
       rngHuman,
       rngAI,
@@ -263,7 +267,7 @@ function swapCells(board, i, j) {
   }
 
   globalThis.G = {
-    version: '2.0.0',
+    version: '2.1.0',
     // barème verbatim
     RANKS, RANK_LABEL, SUIT_LABEL, SUIT_NAME, HAND_SCORES, HAND_LABEL,
     isValidCard, evaluate5, isFull, rowScore, boardScore, boardBreakdown,

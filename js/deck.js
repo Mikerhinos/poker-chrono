@@ -6,8 +6,9 @@
    *  HAND_LABEL, isValidCard, evaluate5, isFull, rowScore,
    *  boardScore, boardBreakdown — texte identique, inchangé)
    * ============================================================ */
-  const RANKS = [7, 8, 9, 10, 11, 12, 13, 14];
-  const RANK_LABEL = { 7: "7", 8: "8", 9: "9", 10: "10", 11: "V", 12: "D", 13: "R", 14: "A" };
+  // v2.1 — 13 rangs complets (2→A), 52 cartes (Texas Hold'em).
+  const RANKS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+  const RANK_LABEL = { 2: "2", 3: "3", 4: "4", 5: "5", 6: "6", 7: "7", 8: "8", 9: "9", 10: "10", 11: "V", 12: "D", 13: "R", 14: "A" };
   const SUIT_LABEL = ["♠", "♥", "♦", "♣"];
   const SUIT_NAME = ["pique", "cœur", "carreau", "trèfle"];
   const HAND_SCORES = {
@@ -22,7 +23,7 @@
   const DIFFICULTIES = ["facile", "normal", "difficile"];
 
   function isValidCard(c) {
-    return !!c && typeof c.r === "number" && c.r >= 7 && c.r <= 14
+    return !!c && typeof c.r === "number" && c.r >= 2 && c.r <= 14
       && typeof c.s === "number" && c.s >= 0 && c.s <= 3;
   }
 
@@ -40,7 +41,10 @@
     }
     const ranks = RANKS.filter((r) => count[r] > 0);
     /* Quinte = 5 rangs distincts consécutifs entre 7 et A (pas d’enroulement). */
-    const straight = ranks.length === 5 && ranks[ranks.length - 1] - ranks[0] === 4;
+    // v2.1 — quinte normale (5 rangs consécutifs) OU wheel A-2-3-4-5 (l'As n'est
+  // ici que BAS ; wheel élevé 10-J-Q-K-A toujours exclu).
+  const wheel = [2, 3, 4, 5, 14].every((r) => count[r] > 0);
+  const straight = ranks.length === 5 && (ranks[ranks.length - 1] - ranks[0] === 4 || wheel);
     const counts = ranks.map((r) => count[r]).sort((a, b) => b - a);
     let type;
     if (straight && flush) type = "quinte_flush";
@@ -73,7 +77,7 @@
    * Humain : glisser-déposer sur son plateau (swap). IA : swaps sur son
    * plateau à cadence fixe (2 s / 1 s / 0,5 s selon difficulté).
    * ============================================================ */
-  const TIME_OPTIONS = [10, 20, 30, 60];
+  const TIME_OPTIONS = [10, 20, 30, 60, 90];
   const AI_INTERVAL = { facile: 2000, normal: 1000, difficile: 500 }; // ms
 
   // Paires de cellules (i<j), ordre déterministe
