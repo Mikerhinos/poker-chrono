@@ -44,6 +44,10 @@
 - Logs → `test/results/porte-1..14.log` (commités = preuve « après »).
 
 ## État courant (MAJ progressive)
-- 2026-10-18 18:55 : lecture complète du mono terminée (carte ci-dessus), baseline sha256 confirmée, tree git = 8 M + 8 ?? (résidus A1/A2 conservés).
-- 2026-10-18 18:57 : baseline « avant » lancée en fond (worktree).
-- [à compléter : split, patchs portes, vérif byte-identique, commit, suites, commits preuves]
+- 2026-10-18 20:30 : split commité `a4b0915` (shell 74 811 o + css/ + js/, 5 fichiers js, 4 css). Preuve byte-identité mono→split : 5 vérifs ok (corps IIFEs verbatim ± wrapper ; CSS segments verbatim).
+- 2026-10-18 20:35 : **shell nettoyé** — `<style>` inline (72 048 o, byte-identique au concat css/) supprimé, `</head>` réinséré (mono L175). Shell = **2 755 o** ; total index+css+js = **119 918 o** (mono 119 687, écart +231 o = overhead balises link/script + `</head>`). 0 `<style>`, 5 `<script src>` (deck, game, ui, audio, fx), 4 `<link>`.
+- Worktree baseline : `pc-baseline-855a12f` @ 855a12f (le 1er worktree était corrompu : chemin git `C:/c/Users/...` double-MSYS — supprimé et recréé avec chemin natif). Logs commités v2.0.0 (14) **supprimés** des 2 worktrees avant re-run (obsolètes : époque mono).
+- Suites : runner background non fiable ici (AVANT : cd perdu ; APRES : P1 mort « stdin is not a tty », chaîne arrêtée — P1 passe en foreground : 30 OK 0 FAIL). → **re-run en foreground chunké (≤ 600 s/chunk)**, ports 94xx par suite.
+- P1 post-split (pc-after, foreground) : `[PORTE 1] 30 OK, 0 FAIL` ✓.
+- Working tree principal : résidus A1/A2 conservés (M g12-seed.mjs, g3-swap.js ; ?? go-logic.mjs, go-ui.mjs, go-ui-85.mjs, probe-audio.mjs, reactivity.mjs, w3c.mjs, results/v2.1/, logs M) — hors périmètre phase 1.
+- [à faire : re-run AVANT (baseline) + APRES (nouveau worktree @ commit shell-fix), comparaison 14/14, commit preuves, puis phase 2]
