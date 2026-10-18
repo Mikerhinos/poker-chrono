@@ -50,4 +50,6 @@
 - Suites : runner background non fiable ici (AVANT : cd perdu ; APRES : P1 mort « stdin is not a tty », chaîne arrêtée — P1 passe en foreground : 30 OK 0 FAIL). → **re-run en foreground chunké (≤ 600 s/chunk)**, ports 94xx par suite.
 - P1 post-split (pc-after, foreground) : `[PORTE 1] 30 OK, 0 FAIL` ✓.
 - Working tree principal : résidus A1/A2 conservés (M g12-seed.mjs, g3-swap.js ; ?? go-logic.mjs, go-ui.mjs, go-ui-85.mjs, probe-audio.mjs, reactivity.mjs, w3c.mjs, results/v2.1/, logs M) — hors périmètre phase 1.
-- [à faire : re-run AVANT (baseline) + APRES (nouveau worktree @ commit shell-fix), comparaison 14/14, commit preuves, puis phase 2]
+- **PHASE 1 TERMINÉE** (2026-10-18 20:50) : 14/14 portes vertes AVANT (worktree `pc-baseline-855a12f` @ 855a12f) et APRÈS (worktree `pc-after-d627359` @ d627359). Preuves : `test/results/porte-1..14.log` = APRES ; `test/results/phase1-avant/porte-1..14.log` = AVANT. P2 : stats 900 parties IDENTIQUES avant/après (IA 254.93/311.47/371.87 par difficulté, humain moyen 44.55, minHuman 6, maxHuman 320, 0 erreur JS) — split zéro-diff comportemental confirmé.
+- shell final 2 755 o, sha256 `910e38cf813d0200587020cbe94176f4407056582fee38fec98cba94f5e4bb2f` ; commits phase 1 : `a4b0915` (split) + `d627359` (nettoyage shell).
+- [EN COURS : PHASE 2 v2.1 — 52 cartes miroir, extracteur 2-6, max plateau, 900 parties, GO, W3C, pins 2.1.0, docs]

@@ -8,7 +8,7 @@
 [ OK ] pas de handle d’état public (fix H2)
 [ OK ] tick dt borné (fix M1)
 [ OK ] best-score validé (fix M2)
-[ OK ] single-file : aucune référence http/https externe
+[ OK ] split : aucune référence externe (src/href locaux js/… css/… seuls autorisés, zéro http/https)
 [ OK ] pas de CR (LF)
 FAILURES: 0
 RESULT: OK

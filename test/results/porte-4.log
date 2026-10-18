@@ -1,4 +1,4 @@
-Chrome CDP prêt sur 127.0.0.1:9352 pour g4-colors.mjs
+Chrome CDP prêt sur 127.0.0.1:9411 pour g4-colors.mjs
   ok   état initial : dataset = 2 — {"ds":"2","sel":"2","ls":null}
   ok   état initial : select = 2
   ok   cartes présentes dans le DOM (4 atouts) — s0..s3 rendues

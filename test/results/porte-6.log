@@ -1,4 +1,4 @@
-Chrome CDP prêt sur 127.0.0.1:9354 pour g6-audio.mjs
+Chrome CDP prêt sur 127.0.0.1:9413 pour g6-audio.mjs
   ok   G.AUDIO défini
   ok   init headless OK (ensure() sans exception)
   ok   AudioContext créé headless — {"ready":true,"ctx":true}

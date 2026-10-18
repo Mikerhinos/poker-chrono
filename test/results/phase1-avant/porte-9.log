@@ -1,0 +1,35 @@
+== G9 — 30 seeds × 2 plateaux, barème interne cohé== G9 — 30 seeds × 2 plateaux, barème interne cohérent (v2) ==
+file: C:\Users\Mikerhinos\.openmausbot\workspaces\8b7108b4-e038-49f5-90ef-53f03bd46b30\pc-baseline-855a12f\index.html
+seed 1000: h=37 ia=45 OK
+seed 1001: h=30 ia=37 OK
+seed 1002: h=30 ia=14 OK
+seed 1003: h=102 ia=60 OK
+seed 1004: h=22 ia=29 OK
+seed 1005: h=30 ia=90 OK
+seed 1006: h=14 ia=30 OK
+seed 1007: h=14 ia=22 OK
+seed 1008: h=45 ia=37 OK
+seed 1009: h=37 ia=29 OK
+seed 1010: h=22 ia=37 OK
+seed 1011: h=45 ia=37 OK
+seed 1012: h=14 ia=14 OK
+seed 1013: h=60 ia=37 OK
+seed 1014: h=22 ia=22 OK
+seed 1015: h=30 ia=14 OK
+seed 1016: h=14 ia=22 OK
+seed 1017: h=200 ia=75 OK
+seed 1018: h=22 ia=75 OK
+seed 1019: h=37 ia=45 OK
+seed 1020: h=37 ia=14 OK
+seed 1021: h=22 ia=37 OK
+seed 1022: h=45 ia=22 OK
+seed 1023: h=22 ia=160 OK
+seed 1024: h=14 ia=45 OK
+seed 1025: h=30 ia=60 OK
+seed 1026: h=37 ia=37 OK
+seed 1027: h=22 ia=60 OK
+seed 1028: h=52 ia=37 OK
+seed 1029: h=67 ia=60 OK
+[ OK ] 60 plateaux : somme des lignes = boardScore = barème
+FAILURES: 0
+RESULT: OK

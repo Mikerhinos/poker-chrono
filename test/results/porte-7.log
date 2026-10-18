@@ -1,4 +1,4 @@
-Chrome CDP prêt sur 127.0.0.1:9355 pour g7-fx.mjs
+Chrome CDP prêt sur 127.0.0.1:9414 pour g7-fx.mjs
   ok   G.FX défini (canvas présent)
   ok   canvas plein écran (largeur/hauteur > 0) — {"w":758,"h":482,"dpr":1,"clamp":true}
   ok   devicePixelRatio borné ≤ 2 — dpr=1

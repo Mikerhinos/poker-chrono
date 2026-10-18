@@ -1,0 +1,9 @@
+[ OK ] decks de 32 cartes
+[ OK ] 2 parties réelles �[ OK ] decks de 32 cartes
+[ OK ] 2 parties réelles → decks différents
+[ OK ] même seed override → decks identiques
+[ OK ] override seed 1234 = deck mulberry32 v1 de référence
+[ OK ] seed négatif → chemin réel (≠ deck override)
+[ OK ] seed non entier → chemin réel (≠ deck override)
+FAILURES: 0
+RESULT: OK
