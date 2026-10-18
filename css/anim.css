@@ -1,0 +1,30 @@
+/* Animations « dopamine ». */
+  @keyframes deal-in {
+    from { transform: translate(46px, -70px) rotate(20deg); opacity: 0; }
+    to   { transform: translate(0, 0) rotate(0); opacity: 1; }
+  }
+  .card.deal-in { animation: deal-in .5s cubic-bezier(.2,.7,.3,1.25) backwards; }
+  @keyframes flip-y {
+    0% { transform: rotateY(0deg); }
+    50% { transform: rotateY(90deg); }
+    100% { transform: rotateY(0deg); }
+  }
+  .card.flip { animation: flip-y .45s ease-in-out; }
+  @keyframes glow-fade {
+    0% { box-shadow: 0 0 16px rgba(62,207,142,.85); border-color: var(--good); }
+    100% { box-shadow: 0 0 0 rgba(62,207,142,0); }
+  }
+  .row.glow .cell { animation: glow-fade 1.2s ease-out; }
+  @keyframes timer-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.07); }
+  }
+  #timer.pulse { animation: timer-pulse 1s ease-in-out infinite; }
+  @keyframes screen-shake {
+    10%, 90% { transform: translate(-2px, 1px); }
+    20%, 80% { transform: translate(3px, -1px); }
+    30%, 70% { transform: translate(-4px, 2px); }
+    40%, 60% { transform: translate(4px, -2px); }
+    50% { transform: translate(-3px, 1px); }
+  }
+  main.shake { animation: screen-shake .6s linear; }

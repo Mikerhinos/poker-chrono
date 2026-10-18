@@ -1,5 +1,6 @@
 // G14 — Scan statique : zéro innerHTML sur données dynamiques (fix L1).
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+// Post-split v2.0.0 : le scan porte sur index.html + css/ + js/ (mêmes critères).
+import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -7,7 +8,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const INDEX_HTML = join(__dirname, '..', 'index.html');
 const OUT = join(__dirname, 'results', 'porte-14.log');
 mkdirSync(join(__dirname, 'results'), { recursive: true });
-const src = readFileSync(INDEX_HTML, 'utf-8');
+let src = readFileSync(INDEX_HTML, 'utf-8');
+for (const d of ['css', 'js']) {
+  for (const f of readdirSync(join(__dirname, '..', d)).sort()) {
+    src += '\n' + readFileSync(join(__dirname, '..', d, f), 'utf-8');
+  }
+}
 const lines = [];
 let failures = 0;
 function check(name, ok, info) {
@@ -24,7 +30,7 @@ check('seed CSPRNG présent (fix H1)', src.includes('getRandomValues') === true)
 check('pas de handle d’état public (fix H2)', /G\.state\s*=|G\.lastSeed\s*=/.test(src) === false);
 check('tick dt borné (fix M1)', src.includes('if (!Number.isFinite(dt) || dt <= 0)') === true);
 check('best-score validé (fix M2)', src.includes('Number.isFinite(parsedBest)') === true);
-check('single-file : aucune référence http/https externe', /<script[^>]+src=|<link[^>]+href="https?:/i.test(src) === false);
+check('split : aucune référence externe (src/href locaux js/… css/… seuls autorisés, zéro http/https)', /<script[^>]+src="(?!js\/)|<link[^>]+href="(?!css\/)|["']https?:\/\//i.test(src) === false);
 check('pas de CR (LF)', src.includes('\r') === false);
 lines.push('FAILURES: ' + failures);
 lines.push('RESULT: ' + (failures === 0 ? 'OK' : 'KO'));

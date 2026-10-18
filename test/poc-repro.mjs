@@ -1,6 +1,6 @@
 // PoC L34K — réexécution des 5 vecteurs d'audit contre l API publique v2.
 // Chaque PoC DOIT échouer (non reproductible). Logs : results/poc-repro.log.
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -64,9 +64,15 @@ async function main() {
     check('M2 : best « abc » → 0 — un score réel redevient un record', over && m2.stored === String(m2.human), JSON.stringify(m2));
 
     // ---- PoC L1 : XSS via innerHTML sur les lignes de décomposition.
-    const html = readFileSync(INDEX_HTML, 'utf-8');
-    const innerCount = (html.match(/innerHTML/g) || []).length;
-    check('L1 : zéro innerHTML dans index.html (rendu par createElement/textContent)', innerCount === 0, 'occurrences=' + innerCount);
+    // Post-split : le scan couvre index.html + css/ + js/ (même critère : zéro innerHTML).
+    let all = readFileSync(INDEX_HTML, 'utf-8');
+    for (const d of ['css', 'js']) {
+      for (const f of readdirSync(join(__dirname, '..', d)).sort()) {
+        all += '\n' + readFileSync(join(__dirname, '..', d, f), 'utf-8');
+      }
+    }
+    const innerCount = (all.match(/innerHTML/g) || []).length;
+    check('L1 : zéro innerHTML dans index.html + css/ + js/ (rendu par createElement/textContent)', innerCount === 0, 'occurrences=' + innerCount);
 
     lines.push('FAILURES: ' + failures);
     lines.push('RESULT: ' + (failures === 0 ? 'POCS NON REPRODUCTIBLES' : 'POC REPRODUCTIBLE'));

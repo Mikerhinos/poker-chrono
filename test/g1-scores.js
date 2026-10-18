@@ -1,6 +1,6 @@
 // PORTE 1 — Réggression du barème + preuve de réutilisation VERBATIM depuis poker-rush.
 import { readFileSync } from 'node:fs';
-import { loadLogic, INDEX_HTML, RUSH_HTML, extractFn, extractConstObject, makeChecker } from './lib.mjs';
+import { loadLogic, INDEX_HTML, DECK_JS, RUSH_HTML, extractFn, extractConstObject, makeChecker } from './lib.mjs';
 
 const G = loadLogic();
 const { check, summary } = makeChecker('PORTE 1');
@@ -55,8 +55,8 @@ check('carte invalide (s=5) → erreur', (() => { try { G.evaluate5([C(7,5), C(8
   check('boardBreakdown 3 lignes étiquetées', bd.length === 3 && bd[0].label === 'Quinte flush' && bd[1].label === 'Quatre' && bd[2].label === 'Carte haute');
 }
 
-/* ---- Preuve VERBATIM : texte identique entre poker-chrono et poker-rush ---- */
-const chrono = readFileSync(INDEX_HTML, 'utf8');
+/* ---- Preuve VERBATIM : texte identique entre poker-chrono (js/deck.js, post-split) et poker-rush ---- */
+const chrono = readFileSync(DECK_JS, 'utf8');
 const rush = readFileSync(RUSH_HTML, 'utf8');
 for (const fn of ['evaluate5', 'rowScore', 'boardScore', 'boardBreakdown', 'isFull', 'isValidCard']) {
   const a = extractFn(chrono, fn);

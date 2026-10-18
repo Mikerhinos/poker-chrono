@@ -1,0 +1,52 @@
+/* Thème rétro : corps VT323, titres arcade PressStart2P (majuscules). */
+  html { font-size: 19px; }
+  body {
+    font-family: 'VT323', 'Segoe UI', system-ui, sans-serif;
+    letter-spacing: .4px;
+  }
+  /* Scanlines CRT subtiles (sous le canvas FX, au-dessus du contenu). */
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: 500; pointer-events: none;
+    background: repeating-linear-gradient(0deg,
+      rgba(0,0,0,.08) 0px, rgba(0,0,0,.08) 1px, transparent 1px, transparent 3px);
+  }
+  header h1, #final-title {
+    font-family: 'PressStart2P', 'VT323', monospace;
+    font-size: .78rem; letter-spacing: 1px; text-transform: uppercase;
+  }
+  select, button, input[type="range"] { font-family: 'VT323', monospace; font-size: 1.05rem; }
+  #timer { font-size: 1.5rem; }
+
+  /* Modes couleur : '2' = rouge #b3352c / noir #1a1f2b ;
+     '4' = pique noir, cœur rouge, carreau vert, trèfle bleu. */
+  body[data-colors="2"] .card.s0,
+  body[data-colors="2"] .card.s3 { color: #1a1f2b; }
+  body[data-colors="2"] .card.s1,
+  body[data-colors="2"] .card.s2 { color: #b3352c; }
+  body[data-colors="4"] .card.s0 { color: #1a1f2b; }
+  body[data-colors="4"] .card.s1 { color: #b3352c; }
+  body[data-colors="4"] .card.s2 { color: #1f9d55; }
+  body[data-colors="4"] .card.s3 { color: #2456c9; }
+
+  /* Nom de la main courante, en face de chaque ligne (mis à jour à chaque
+     deal et à chaque swap — même fonction évaluatrice que le score). */
+  .row { grid-template-columns: 128px repeat(5, 62px); }
+  .row-name {
+    font-size: 1.05rem; color: var(--muted); align-self: center;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* Contrôles audio (toggles ON/OFF + sliders séparés). */
+  .audio-panel { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .audio-panel .audio-btn {
+    min-width: 74px; text-align: center; color: var(--muted);
+    border-color: var(--line); opacity: .6;
+  }
+  .audio-panel .audio-btn.on { color: var(--text); opacity: 1; border-color: var(--accent); }
+  .vol { display: flex; align-items: center; gap: 6px; font-size: .95rem; color: var(--muted); }
+  .vol input[type="range"] { width: 90px; margin: 0; }
+
+  /* Canvas FX plein écran, au-dessus du DOM, ne bloque aucun clic. */
+  #fx { position: fixed; inset: 0; z-index: 9999; pointer-events: none; }
+
+  

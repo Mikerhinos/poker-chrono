@@ -1,4 +1,5 @@
-// Charge le module de logique de poker-chrono/index.html dans Node (sans DOM).
+// Charge le module de logique de poker-chrono (js/deck.js + js/game.js) dans Node (sans DOM).
+// Split v2.0.0 : le mono index.html est décomposé en shell + css/ + js/ ; la logique vit dans js/.
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -6,13 +7,14 @@ import { dirname, join } from 'node:path';
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const ROOT = join(HERE, '..');
 export const INDEX_HTML = join(ROOT, 'index.html');
+export const DECK_JS = join(ROOT, 'js', 'deck.js');
+export const GAME_JS = join(ROOT, 'js', 'game.js');
 export const RUSH_HTML = join(ROOT, '..', 'poker-rush', 'index.html');
 
 export function loadLogic() {
-  const html = readFileSync(INDEX_HTML, 'utf8');
-  const m = html.match(/<script id="game-logic">([\s\S]*?)<\/script>/);
-  if (!m) throw new Error('script game-logic introuvable dans index.html');
-  new Function(m[1])(); // IIFE : s'attache à globalThis.G
+  const deck = readFileSync(DECK_JS, 'utf8');
+  const game = readFileSync(GAME_JS, 'utf8');
+  new Function(deck + '\n' + game)(); // IIFE : s'attache à globalThis.G
   const G = globalThis.G;
   if (!G || typeof G.evaluate5 !== 'function') throw new Error('globalThis.G manquant');
   return G;
