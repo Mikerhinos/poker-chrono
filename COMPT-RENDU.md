@@ -261,7 +261,7 @@ Les 10 portes existantes repassent après les corrections (dont 5 v1 inchangées
 ### Items
 1. **Deck 52** ✅ — 13 rangs (2→A) × 4 couleurs, mélange seedé CSPRNG (xoshiro128**), 15 tirées, **deal miroir** (main_joueur == main_IA), 37 jetées. P1 : 41 OK / 0 FAIL.
 2. **Extracteur** ✅ — rangs 2-6, wheel A-2-3-4-5, hautes avec basses, kickers couverts par P1 (41 checks) + P12 (seed) ; aucun bug trouvé (aucun correctif extracteur).
-3. **Max plateau** ✅ — re-déduit, aucune constante 1500/1501 préexistante (0 occurrence) : **1500**. Simulation `test/max-board.mjs` 8/8 (max plateau 1500, main miroir max 500).
+3. **Max plateau** ✅ — re-déduit, aucune constante 1500/1501 préexistante (0 occurrence) : **1500**. Simulation `test/max-board.mjs` 7/7 (max plateau 1500, main miroir max 500).
 4. **Bench 900** ✅ — `node test/g2g4-headless.js` → exit 0 : **min=6, P1=52, médiane=22, max=215** (300 parties × 3 difficultés, déterministe, identique sur 2 exécutions). Gradient strict 136.09 < 167.89 < 209.57. Preuve : `test/results/bench-900-final.log`.
 5. **GO** ✅ — +1 pt/seconde restante, fenêtre 5 s, 2e clic idempotent, l'IA ne fait jamais GO. **Cap anti-abus : min+85 = 137 > P1−30 → on ne garde pas 85 ; cap = floor(P1−min−30) = floor(52−6−30) = 16** (`GO_BONUS_CAP = 16`, game.js). go-logic 18/18, go-ui + go-ui-85 exit 0.
 6. **W3C** ✅ — `id="fx"` retiré des `<script>` ; titre de repli `#final-title` non vide ; fix réactivité (brief v2.1) : `js/audio.js` — 1er clic par canal = **armement** (force ON + `ensure()` du AudioContext dans le même tick), clics suivants = basculement (`_musicArmed`/`_sfxArmed`). `test/reactivity.mjs` : 10/10.
@@ -279,7 +279,7 @@ node test/g1-scores.js                            # [PORTE 1] 41 OK, 0 FAIL
 node test/g3-swap.js                              # [PORTE 3] 24 OK, 0 FAIL
 node test/g2g4-headless.js                        # bench 900 → exit 0
 node test/go-logic.mjs                            # 18/18 OK
-node test/max-board.mjs                           # 8/8 OK
+node test/max-board.mjs                           # 7/7 OK
 node test/w3c.mjs                                 # 2/2 OK
 node test/g8-scan.mjs ; node test/g14-innertest.mjs
 node test/run-headless.mjs go-ui.mjs 9401 </dev/null       # exit 0
@@ -329,3 +329,14 @@ node test/run-headless.mjs poc-repro.mjs 9420 </dev/null   # 0 FAIL
 - **Aucun changement code/tests/bench/cap** : stats min=6, P1=52, cap GO 16 inchangées.
 - **Re-run des portes (2026-10-19, doc-only, comportement inchangé)** : g1-scores 41 OK · g3-swap 24 OK · w3c 2 OK · go-logic 18 OK · g8-scan 23 OK · g14-innertest 0 FAIL · max-board 7 OK · bench 900 exit 0 (min=6, max=215, déterministe) — **0 FAIL au total**.
 - Manifeste `sha256-final-v21.txt` régénéré (mêmes 46 chemins, même format « N|hash *./path ») → vérifié **46/46 OK** par re-lecture.
+
+### Erratum n°3 (2026-10-19) — delta-audit L34K : corrections doc F1+F2 (REWORK-2)
+
+- **Constat** (audit L34K `AUDIT-L34K-v2.1.md`, verdict YELLOW, 2 findings Low, doc-only) :
+  - **F1 — règle d'as** : README.md L40 et js/deck.js L45 disaient « 10-J-Q-K-A n'est pas une quinte », alors que le code (js/deck.js : `ranks[ranks.length−1] − ranks[0] === 4`) et la porte g1 traitent le broadway 10-J-Q-K-A comme quinte (75). THe standard : 10-J-Q-K-A **est** une quinte ; l'unique enroulement exclu est K-A-2-3-4.
+  - **F2 — compte max-board obsolète** : README.md L181 « 8 OK », COMPT-RENDU.md L264 « 8/8 », COMPT-RENDU.md L282 « 8/8 OK » ; état réel `node test/max-board.mjs` → **7 OK, 0 FAIL**.
+- **Décision NI4NI** : le code est correct (re-vérifié par NI4NI par ses propres re-runs : g1 41 OK dont la ligne « 10-J-Q-K-A → quinte (75) », max-board 7 OK, 0 FAIL) ; les docs sont alignées sur le code (THe standard). Le gate max-board n'est pas touché.
+- **Correctifs doc-only** : README.md L40 + commentaire js/deck.js L45 (F1) ; README.md L181 + COMPT-RENDU.md L264/L282 (F2 → 7 OK).
+- **Aucune stat/cap modifiée** : code de jeu, tests, bench, cap GO (min=6, P1=52, cap 16) inchangés — hash de `test/g2g4-result.txt` inchangé avant/après (`33e6d93f…`).
+- **Re-run (2026-10-19)** : `node test/g1-scores.js` → 41 OK, 0 FAIL · `node test/max-board.mjs` → 7 OK, 0 FAIL.
+- Manifeste `sha256-final-v21.txt` régénéré (mêmes 46 chemins, même ordre/format « N|hash *./path ») → recalcul **46/46 OK** par re-lecture.

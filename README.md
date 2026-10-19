@@ -37,7 +37,7 @@ Le barème d'évaluation (scores des mains) est réutilisé **verbatim** (à l'o
 | Paire | `paire` | 10 |
 | Carte haute | `carte_haute` | 2 |
 
-**Règle d'as** : l'as est haute, et basse uniquement dans le wheel — **A-2-3-4-5 est une quinte** (5 haute, wheel standard THe) ; **pas d'enroulement élevé** (10-J-Q-K-A n'est pas une quinte).
+**Règle d'as** : l'as est haute, et basse uniquement dans le wheel — **A-2-3-4-5 est une quinte** (5 haute, wheel standard THe) ; **10-J-Q-K-A est une quinte** (broadway) ; **K-A-2-3-4 n'est pas une quinte** (unique enroulement exclu).
 
 ## 2. Interface
 
@@ -178,7 +178,7 @@ node test/run-headless.mjs poc-repro.mjs 9361    # rejoue les 5 PoC L34K : tous 
 node test/g1-scores.js                          # P1 barème 52 cartes (13 rangs, miroir) → 41 OK, 0 FAIL
 node test/g3-swap.js                            # P2 swap                                → 24 OK, 0 FAIL
 node test/g2g4-headless.js                      # P3 bench 900 + gradient IA           → 6 OK, 0 FAIL (exit 0)
-node test/max-board.mjs                         # max théorique plateau 52 cartes      → 8 OK, max=1500
+node test/max-board.mjs                         # max théorique plateau 52 cartes      → 7 OK, max=1500
 node test/go-logic.mjs                          # GO logique : cap 16, 5 s, idempotent, IA jamais GO → 18 OK
 node test/run-headless.mjs go-ui.mjs 9349       # GO UI : activation 5 s, bonus affiché → exit 0
 node test/run-headless.mjs go-ui-85.mjs 9350    # GO à t=85 s sur 90 s (toujours actif) → exit 0
