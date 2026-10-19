@@ -49,27 +49,39 @@ function swapCells(board, i, j) {
   }
 
   // Difficile : évaluation quasi exacte sur 3 coups (beam 10 déterministe sur
-  // le 1er coup, exploration complète des 105 swaps aux plies 2 et 3)
-  function eval3ply(board) {
+  // le 1er coup, exploration complète des 105 swaps aux plies 2 et 3).
+  // v2.1 (fix P4) : exclusion du dernier swap joué (exI/exJ) et de son
+  // annulation à la plie 2 — supprime les cycles 2 plies (l'IA rejouait le
+  // même swap à l'identique à chaque tour, oscillant sans jamais progresser).
+  function eval3ply(board, exI = -1, exJ = -1) {
     const rs = rowScoresOf(board);
     const cands = [];
-    for (const [i, j] of PAIRS) cands.push({ i, j, d1: deltaSwap(board, i, j, rs) });
+    for (const [i, j] of PAIRS) {
+      if (exI >= 0 && i === exI && j === exJ) continue;
+      cands.push({ i, j, d1: deltaSwap(board, i, j, rs) });
+    }
     cands.sort((a, b) => b.d1 - a.d1); // stable → déterministe sur égalité
     const beam = cands.slice(0, 10);
-    let bi = -1, bj = -1, bv = -Infinity;
+    let bi = -1, bj = -1, bv = -Infinity, bd1 = -Infinity;
     for (const c of beam) {
       swapCells(board, c.i, c.j);
       const rs2 = rowScoresOf(board);
       const cands2 = [];
-      for (const [i, j] of PAIRS) cands2.push({ i, j, d: deltaSwap(board, i, j, rs2) });
+      for (const [i, j] of PAIRS) {
+        if (i === c.i && j === c.j) continue; // annulation de la plie 1
+        cands2.push({ i, j, d: deltaSwap(board, i, j, rs2) });
+      }
       cands2.sort((a, b) => b.d - a.d); // stable → déterministe sur égalité
       const beam2 = cands2.slice(0, 12);
       for (const c2 of beam2) {
         swapCells(board, c2.i, c2.j);
         const d3 = bestNextDelta(board, rowScoresOf(board));
         swapCells(board, c2.i, c2.j);
-        const v = c.d1 + c2.d + d3;
-        if (v > bv) { bv = v; bi = c.i; bj = c.j; }
+        // v2.1 (fix P4) : l'IA peut toujours passer (coup neutre ou absence
+        // de coup) — la valeur d'une plie continue est max(0, meilleur
+        // delta), pas la somme forcée de coups négatifs.
+        const v = c.d1 + Math.max(0, c2.d) + Math.max(0, d3);
+        if (v > bv) { bv = v; bi = c.i; bj = c.j; bd1 = c.d1; }
       }
       swapCells(board, c.i, c.j);
     }
@@ -83,6 +95,15 @@ function swapCells(board, i, j) {
     }
     return null;
   }
+
+  // v2.1 — GO ! (item 5 du brief) : 1 pt / seconde restante, débloqué à
+  // t = 5 s, 2e clic idempotent, l'IA ne fait jamais GO.
+  // Cap d'anti-abus : recalibré sur le bench 900 parties v2.1
+  // (stats humains : min=6, P1=52, médiane=22, max=215) :
+  // min + 85 = 91 > P1 − 30 = 22 → on ne garde PAS 85 ;
+  // cap = floor(P1 − min − 30) = floor(52 − 6 − 30) = 16.
+  const GO_BONUS_CAP = 16;
+  const GO_MIN_MS = 5000;
 
   function createGame(opts = {}) {
     const difficulty = DIFFICULTIES.includes(opts.difficulty) ? opts.difficulty : 'normal';
@@ -136,6 +157,8 @@ function swapCells(board, i, j) {
       running: false,
       over: false,
       aiTimer: 0,
+      goUsed: false, // v2.1 : GO déjà utilisé (idempotence du 2e clic)
+      goBonus: 0,    // v2.1 : bonus GO accordé (0 = fin naturelle)
       deck: deck.slice(15), // v2.1 : 37 cartes non utilisées (audit, jamais jouées)
       boards,
       rngHuman,
@@ -158,10 +181,15 @@ function swapCells(board, i, j) {
     state.over = true;
     const human = boardScore(state.boards.human);
     const ai = boardScore(state.boards.ai);
+    const bonus = state.goBonus || 0; // v2.1 : bonus GO (0 pour une fin naturelle)
+    const totalHuman = human + bonus;
     state.result = {
       human,
       ai,
-      winner: human > ai ? 'human' : ai > human ? 'ai' : 'draw',
+      bonus,
+      totalHuman,
+      // v2.1 : vainqueur recalculé bonus inclus (plateau + GO contre l'IA).
+      winner: totalHuman > ai ? 'human' : ai > totalHuman ? 'ai' : 'draw',
       rowsHuman: boardBreakdown(state.boards.human),
       rowsAI: boardBreakdown(state.boards.ai)
     };
@@ -204,9 +232,29 @@ function swapCells(board, i, j) {
     return { ok: true };
   }
 
+  // v2.1 — GO ! (humain uniquement : l'IA ne fait jamais GO) : stoppe le
+  // chrono, bonus = ceil(secondes restantes) × 1 pt, plafonné à
+  // GO_BONUS_CAP. Idempotent : le 2e clic est refusé ('already').
+  // Retour { ok, bonus, human, ai, totalHuman, winner } ou { ok:false, reason }.
+  function goNow(state) {
+    if (!state) return { ok: false, reason: 'no_state' };
+    if (state.goUsed) return { ok: false, reason: 'already' };
+    if (state.over) return { ok: false, reason: 'over' };
+    if (!state.running) return { ok: false, reason: 'not_running' };
+    const elapsed = state.time * 1000 - state.timeLeft;
+    if (elapsed < GO_MIN_MS) return { ok: false, reason: 'too_early' };
+    const bonus = Math.min(GO_BONUS_CAP, Math.ceil(state.timeLeft / 1000));
+    state.goUsed = true;
+    state.goBonus = bonus;
+    finish(state); // result recalculé (bonus, totalHuman, winner)
+    const res = state.result;
+    return { ok: true, bonus, human: res.human, ai: res.ai, totalHuman: res.totalHuman, winner: res.winner };
+  }
+
   // Un coup IA sur son propre plateau (visible : les 2 cellules sont flashées).
   function aiStep(state) {
     if (!state || state.over || !state.running) return null;
+    if (state.aiFrozen) return null; // v2.1 (mode 2P) : IA gelée — aucun swap, jamais de GO
     const board = state.boards.ai;
     let pick = null;
     if (state.difficulty === 'facile') {
@@ -225,8 +273,9 @@ function swapCells(board, i, j) {
       const mv = evalGreedy(board);
       pick = mv.value > 0 ? { i: mv.i, j: mv.j } : neutralMove(board);
     } else {
-      const mv = eval3ply(board);
-      pick = mv.value > 0 ? { i: mv.i, j: mv.j } : neutralMove(board);
+      const lm = state.lastAiMove;
+      const mv3 = eval3ply(board, lm ? lm.i : -1, lm ? lm.j : -1);
+      pick = mv3.value > 0 ? { i: mv3.i, j: mv3.j } : neutralMove(board);
     }
     if (!pick) return null;
     swapCells(board, pick.i, pick.j);
@@ -273,6 +322,7 @@ function swapCells(board, i, j) {
     isValidCard, evaluate5, isFull, rowScore, boardScore, boardBreakdown,
     // poker chrono
     DIFFICULTIES, TIME_OPTIONS, AI_INTERVAL, PAIRS,
-    createGame, start, tick, humanSwap, aiStep, humanRandomSwap,
+    GO_MIN_MS, GO_BONUS_CAP,
+    createGame, start, tick, humanSwap, goNow, aiStep, humanRandomSwap,
     simulateGame, cardText
   };

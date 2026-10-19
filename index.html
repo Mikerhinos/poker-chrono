@@ -24,6 +24,7 @@
       <option value="20" selected>20 s</option>
       <option value="30">30 s</option>
       <option value="60">60 s</option>
+      <option value="90">90 s</option>
     </select>
 
     <select id="colors" title="Mode de rendu des couleurs">
@@ -37,6 +38,7 @@
       <label class="vol"><span>Vol. SFX</span><input type="range" id="sfx-vol" min="0" max="100" value="80"></label>
     </div>
     <button id="start" type="button">Jouer</button>
+      <button id="go" type="button" disabled>GO !</button>
     <div id="timer">--</div>
     <div id="status">Prêt — choisissez la difficulté et le temps.</div>
   </div>
@@ -57,7 +59,7 @@
 
 <footer>
   <div id="final" hidden>
-    <h2 id="final-title"></h2>
+    <h2 id="final-title">Fin de partie</h2>
     <div class="breakdowns">
       <div class="bd"><h3>Votre plateau</h3><div id="rows-human"></div></div>
       <div class="bd"><h3>Plateau de l’IA</h3><div id="rows-ai"></div></div>
@@ -72,7 +74,7 @@
 <script src="js/deck.js"></script>
 <script src="js/game.js"></script>
 <script id="audio" src="js/audio.js"></script>
-<script id="fx" src="js/fx.js"></script>
+<script src="js/fx.js"></script>
 <script id="ui" src="js/ui.js"></script>
 </body>
 </html>

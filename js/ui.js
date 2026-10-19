@@ -213,6 +213,32 @@
     msg(REASONS.out);
   }
 
+  /* ---------- GO ! (v2.1, item 5 du brief) ----------
+   * 1 pt / seconde restante, débloqué à 5 s, 2e clic idempotent,
+   * l'IA ne fait jamais GO. */
+  const GO_REASONS = {
+    no_state: 'Partie non lancée.',
+    already: '', // idempotent : 2e clic silencieux
+    over: 'Partie terminée.',
+    not_running: 'Lancez la partie d’abord.',
+    too_early: 'Trop tôt : le GO se débloque après 5 s.'
+  };
+  function onGoClick() {
+    if (!state) return;
+    const res = G.goNow(state);
+    if (!res.ok) {
+      if (res.reason !== 'already' && GO_REASONS[res.reason]) msg(GO_REASONS[res.reason]);
+      return;
+    }
+    endGame();
+  }
+  function updateGoButton() {
+    const b = $('#go');
+    if (!b || !state) return;
+    const elapsed = state.time * 1000 - state.timeLeft;
+    b.disabled = state.over || state.goUsed || !state.running || elapsed < G.GO_MIN_MS;
+  }
+
   /* ---------- cycle de vie ---------- */
 
   function startGame() {
@@ -232,6 +258,7 @@
     renderAll({ animateAll: true });
     if (G.AUDIO) { G.AUDIO.ensure(); G.AUDIO.sfx.deal(); }
     if (G.FX) { G.FX.boardBurst('#board-human'); G.FX.boardBurst('#board-ai'); }
+    updateGoButton();
     if (uiTimer) clearInterval(uiTimer);
     uiTimer = setInterval(uiTick, 100);
   }
@@ -255,6 +282,7 @@
     ];
     const info = G.tick(state, dt);
     updateTimer();
+    updateGoButton();
     if (!state.over) {
       /* v2 : tic-tac chrono (10 dernières secondes) + sirène finale (≤ 5 s). */
       const sec = Math.ceil(state.timeLeft / 1000);
@@ -299,8 +327,11 @@
       : '🤝 Égalité !';
     renderBreakdown($('#rows-human'), r.rowsHuman);
     renderBreakdown($('#rows-ai'), r.rowsAI);
+    const goBonus = r.bonus || 0;
     $('#final-scores').textContent =
-      'Votre plateau : ' + r.human + ' pts — Plateau de l’IA : ' + r.ai + ' pts';
+      'Votre plateau : ' + r.human + ' pts' +
+      (goBonus > 0 ? ' + bonus GO : ' + goBonus + ' pts = ' + (r.human + goBonus) + ' pts' : '') +
+      ' — Plateau de l’IA : ' + r.ai + ' pts';
     let best = 0;
     let record = false;
     try {
@@ -337,6 +368,7 @@
   document.addEventListener('drop', onDocumentDrop);
   document.addEventListener('dragover', (e) => e.preventDefault());
   $('#start').addEventListener('click', startGame);
+  $('#go').addEventListener('click', onGoClick);
   $('#replay').addEventListener('click', startGame);
 
   /* v2 : toggle de rendu 2 ↔ 4 couleurs (persisté, rendu uniquement). */
@@ -395,7 +427,20 @@
       ? { difficulty: state.difficulty, timeLeft: state.timeLeft, running: state.running,
           over: state.over, humanMoves: state.humanMoves, aiMoves: state.aiMoves,
           ended: state.result !== null }
-      : null
+      : null,
+    /* v2.1 — GO ! : état du chrono + résultat (test / automatisation) */
+    goInfo: () => {
+      if (!state) return null;
+      const human = state.result ? state.result.human : G.boardScore(state.boards.human);
+      const bonus = state.result ? state.result.bonus : 0;
+      return {
+        elapsedMs: state.time * 1000 - state.timeLeft,
+        over: state.over,
+        human,
+        bonus,
+        totalHuman: human + bonus
+      };
+    }
   };
 
   /* Init : partie réelle (seed 128 bits CSPRNG interne), aucun handle public. */
