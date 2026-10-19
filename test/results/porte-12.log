@@ -1,9 +1,12 @@
-[ OK ] decks de 32 cartes
-[ OK ] 2 parties réelles �[ OK ] decks de 32 cartes
-[ OK ] 2 parties réelles → decks différents
-[ OK ] même seed override → decks identiques
-[ OK ] override seed 1234 = deck mulberry32 v1 de référence
-[ OK ] seed négatif → chemin réel (≠ deck override)
-[ OK ] seed non entier → chemin réel (≠ deck override)
+[ OK ] deals de 52 cartes (15+15+37)
+[ OK ] miroir réel : main joueur == main IA
+[ OK ] 2 parties réelles → deals différents (128 bits)
+[ OK ] même seed override → mêmes 15 cartes (joueur)
+[ OK ] même seed override → main IA identique (miroir)
+[ OK ] override : miroir human == ai
+[ OK ] deux seeds 128 bits différents → deals différents
+[ OK ] seed négatif → chemin réel (≠ deal override)
+[ OK ] seed non entier → chemin réel (≠ deal override)
+[ OK ] seeds invalides : miroir conservé
 FAILURES: 0
 RESULT: OK

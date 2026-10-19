@@ -1,0 +1,10 @@
+Chrome CDP prêt sur 127.0.0.1:9328 pour probe-audio.mjs
+PROBE 1 : présence API AudioContext (avant tout geste)
+  {"ac":"function","wac":"undefined"}
+PROBE 2 : création directe (aucun geste utilisateur)
+  {"created":true,"state":"suspended"}
+PROBE 3 : clic synthétique sur #music-toggle → ctx + état + classe
+  {"musicOn":false,"ctx":true,"ctxState":"suspended","cls":"audio-btn"}
+PROBE 4 : après 500 ms, état du ctx si créé
+  {"ctx":true,"ctxState":"suspended"}
+probe : terminé

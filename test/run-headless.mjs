@@ -26,6 +26,9 @@ const chrome = spawn(CHROME, [
   `--remote-debugging-port=${PORT}`,
   '--remote-allow-origins=*',
   '--allow-file-access-from-files',
+  // Environnement headless sans geste utilisateur réel : autorise le
+  // démarrage des AudioContext (sinon state restant « suspended »).
+  '--autoplay-policy=no-user-gesture-required',
   'about:blank'
 ], { stdio: 'ignore' });
 

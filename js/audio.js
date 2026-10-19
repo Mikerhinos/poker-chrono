@@ -36,7 +36,12 @@
     sfxVol: clamp01(lsGet(KEY.sv, '0.8')),
     step: 0,
     nextStepTime: 0,
-    timer: null
+    timer: null,
+    /* v2.1 (fix réactivité) : le 1er clic sur un toggle ARME le son
+       (force ON, contexte créé/repris dans le même tick) au lieu
+       d'inverser l'état affiché. Clics suivants : basculement normal. */
+    _musicArmed: false,
+    _sfxArmed: false
   };
 
   /* Partition 16 pas (120 BPM, 1 pas = 1/4 de temps). 0 = repos. */
@@ -227,13 +232,17 @@
   /* ---------- API publique ---------- */
 
   function setMusic(on) {
+    if (!A._musicArmed) { A._musicArmed = true; on = true; }
     A.musicOn = !!on;
     lsSet(KEY.music, A.musicOn ? '1' : '0');
+    if (A.musicOn) ensure(); // arme le contexte au premier geste (autoplay)
     if (A.musicGain) A.musicGain.gain.value = musicGainValue();
   }
   function setSfx(on) {
+    if (!A._sfxArmed) { A._sfxArmed = true; on = true; }
     A.sfxOn = !!on;
     lsSet(KEY.sfx, A.sfxOn ? '1' : '0');
+    if (A.sfxOn) ensure(); // arme le contexte au premier geste (autoplay)
     if (A.sfxGain) A.sfxGain.gain.value = sfxGainValue();
   }
   function setMusicVol(v) {

@@ -15,7 +15,7 @@ const page = (expr) => evalJs(cdp, expr);
 
 async function waitForPage() {
   for (let i = 0; i < 100; i++) {
-    const r = await page(`(document.readyState === 'complete' && window.G && window.G.version === '2.0.0' && window.G.UI) ? 'ready' : 'loading'`);
+    const r = await page(`(document.readyState === 'complete' && window.G && window.G.version === '2.1.0' && window.G.UI) ? 'ready' : 'loading'`);
     if (r === 'ready') return;
     await sleep(200);
   }
@@ -45,17 +45,24 @@ const run = async () => {
   const st0 = JSON.parse(await page(`JSON.stringify({ m: G.AUDIO.state.musicOn, s: G.AUDIO.state.sfxOn })`));
   check('musique ON par défaut', st0.m === true, JSON.stringify(st0));
   check('SFX ON par défaut', st0.s === true);
+  // v2.1 (fix réactivité) : 1er clic sur chaque canal = armement du son (force ON + AudioContext
+  // dans le même tick), clics suivants = basculement normal.
   await page(`document.getElementById('music-toggle').click()`);
   const st1 = JSON.parse(await page(`JSON.stringify({ m: G.AUDIO.state.musicOn, lm: localStorage.getItem('poker-chrono-audio-music'),
     pressed: document.getElementById('music-toggle').getAttribute('aria-pressed') })`));
-  check('toggle musique OFF : état + LS + aria-pressed', st1.m === false && st1.lm === '0' && st1.pressed === 'false', JSON.stringify(st1));
+  check('musique 1er clic : armement ON (v2.1) : état + LS + aria-pressed', st1.m === true && st1.lm === '1' && st1.pressed === 'true', JSON.stringify(st1));
   await page(`document.getElementById('music-toggle').click()`);
-  const st2 = JSON.parse(await page(`G.AUDIO.state.musicOn === true && localStorage.getItem('poker-chrono-audio-music') === '1'`));
-  check('toggle musique ON (retour)', st2 === true);
+  const st2 = JSON.parse(await page(`G.AUDIO.state.musicOn === false && localStorage.getItem('poker-chrono-audio-music') === '0'`));
+  check('musique 2e clic : OFF', st2 === true);
+  await page(`document.getElementById('music-toggle').click()`);
+  const st2b = JSON.parse(await page(`G.AUDIO.state.musicOn === true && localStorage.getItem('poker-chrono-audio-music') === '1'`));
+  check('musique 3e clic : ON (retour)', st2b === true);
   await page(`document.getElementById('sfx-toggle').click()`);
   const st3 = JSON.parse(await page(`JSON.stringify({ s: G.AUDIO.state.sfxOn, ls: localStorage.getItem('poker-chrono-audio-sfx') })`));
-  check('toggle SFX OFF : état + LS', st3.s === false && st3.ls === '0', JSON.stringify(st3));
+  check('SFX 1er clic : armement ON (v2.1) : état + LS', st3.s === true && st3.ls === '1', JSON.stringify(st3));
   await page(`document.getElementById('sfx-toggle').click()`);
+  const st3b = JSON.parse(await page(`G.AUDIO.state.sfxOn === false && localStorage.getItem('poker-chrono-audio-sfx') === '0'`));
+  check('SFX 2e clic : OFF', st3b === true);
 
   // Sliders de volume séparés.
   await page(`(() => { const el = document.getElementById('music-vol'); el.value = '33'; el.dispatchEvent(new Event('input')); return el.value; })()`);

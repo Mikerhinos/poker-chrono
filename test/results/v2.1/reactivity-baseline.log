@@ -1,0 +1,12 @@
+Chrome CDP prêt sur 127.0.0.1:9326 pour reactivity.mjs
+  ok  état initial : contexte audio pas encore créé (aucun geste)
+  FAIL 1er clic musique : état = ON (le clic ne coupe pas l’état affiché) — {"musicOn":false,"ctx":false,"gain":0,"cls":"audio-btn"}
+  FAIL 1er clic musique : contexte créé + gain > 0 (même tick, feedback immédiat) — {"musicOn":false,"ctx":false,"gain":0,"cls":"audio-btn"}
+  FAIL 1er clic musique : feedback visuel immédiat (.on sur le bouton) — audio-btn
+  FAIL 1er clic SFX : état ON + gain > 0 — {"sfxOn":false,"gain":0,"cls":"audio-btn"}
+  FAIL contexte audio « running » atteint
+  FAIL feedback visuel immédiat : .on sur musique + SFX — {"m":"audio-btn","s":"audio-btn"}
+  FAIL 3 clics consécutifs : 3 basculements (OFF/ON/OFF) — [true,false,true]
+  FAIL état final OFF reflété sur le bouton (aucun état fantôme)
+  ok  0 exception JS pendant la séquence
+reactivity : 2 ok, 8 fail
