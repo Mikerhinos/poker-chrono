@@ -313,3 +313,7 @@ node test/run-headless.mjs poc-repro.mjs 9420 </dev/null   # 0 FAIL
 - Gates : 7 NODE + 10 HEADLESS + réactivité + GO UI ×2 → **tous exit 0** (2026-10-19).
 - sha256 baseline v2.0.0 mono : `3b3644e6…0e1a8` (119 687 o) ; état final v2.1 : manifeste `sha256-final-v21.txt` (46 fichiers hors `.git` et `test/results`).
 - Périmètre respecté : `poker-chrono/` uniquement ; P2/multijoueur non touché.
+
+### Erratum (2026-10-19, après archivage 4RCH1V)
+- Section v2.1.0 § GO, ligne « Cap anti-abus » : « min+85 = 137 » → **min+85 = 91** (137 = P1+85, coquille arithmétique). Conclusion inchangée : 91 > P1−30 = 22 → cap = floor(P1−min−30) = **16** (`GO_BONUS_CAP = 16`), conforme au bench log `test/results/bench-900-final.log` et au README (L167, déjà correct).
+- Manifeste `sha256-final-v21.txt` régénéré : **46/46 OK** (avant : 44/46 — `ANCRE-PARTS.md` et `COMPT-RENDU.md` étaient stale, le manifeste ayant été généré avant les append finaux).
