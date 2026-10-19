@@ -1,4 +1,4 @@
-// PORTE 8 — Zéro dépendance externe : scan statique de index.html + css/ + js/ (post-split v2.1.0).
+// PORTE 8 — Zéro dépendance externe : scan statique de index.html + css/ + js/ (post-split v2.1.1).
 // Critères inchangés : aucune URL http(s)://, aucune référence externe ; les références
 // relatives locales (css/…, js/…) sont la structure du split et sont autorisées.
 import { readFileSync, statSync, readdirSync } from 'node:fs';
@@ -47,7 +47,7 @@ const linkHrefs = [...html.matchAll(/<link[^>]*\bhref\s*=\s*["']([^"']*)["']/gi)
 for (const h of linkHrefs) {
   check(`<link href="${h}" référence locale`, h.startsWith('css/') && !h.includes('://'), h);
 }
-check('5 modules js/ référencés (deck, fx, game, ui, audio)', scriptSrcs.length === 5, scriptSrcs.join(', '));
+check('6 modules js/ référencés (deck, game, i18n, audio, fx, ui)', scriptSrcs.length === 6, scriptSrcs.join(', '));
 check('4 feuilles css/ référencées (base, fonts, theme, anim)', linkHrefs.length === 4, linkHrefs.join(', '));
 
 // Attributs src= génériques : rien d'autre que data:/blob:/about: et les locales js/… (les css/… passent par href).

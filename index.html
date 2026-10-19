@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Poker Chrono — v2 dopamine</title>
+<meta name="description" content="Poker Chrono - speed poker: drag & drop, GO bonus, 5 languages.">
+<title>Poker Chrono - v2 dopamine</title>
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/theme.css">
@@ -14,65 +15,73 @@
 <header>
   <h1>Poker Chrono</h1>
   <div class="controls">
-    <select id="diff" title="Difficulté de l'IA">
-      <option value="facile">Facile</option>
-      <option value="normal" selected>Normal</option>
-      <option value="difficile">Difficile</option>
+    <select id="diff" title="AI difficulty" data-i18n-title="diff_label">
+      <option value="facile" data-i18n="diff_facile">Easy</option>
+      <option value="normal" selected data-i18n="diff_normal">Normal</option>
+      <option value="difficile" data-i18n="diff_difficile">Hard</option>
     </select>
-    <select id="time" title="Temps de la manche (secondes)">
+    <select id="time" title="Round time (seconds)" data-i18n-title="time_label">
       <option value="10">10 s</option>
-      <option value="20" selected>20 s</option>
-      <option value="30">30 s</option>
+      <option value="20">20 s</option>
+      <option value="30" selected>30 s</option>
       <option value="60">60 s</option>
       <option value="90">90 s</option>
     </select>
 
-    <select id="colors" title="Mode de rendu des couleurs">
-      <option value="2" selected>2 couleurs</option>
-      <option value="4">4 couleurs</option>
+  <select id="lang" title="Language">
+    <option value="en">🇬🇧 English</option>
+    <option value="fr">🇫🇷 Français</option>
+    <option value="es">🇪🇸 Español</option>
+    <option value="it">🇮🇹 Italiano</option>
+    <option value="de">🇩🇪 Deutsch</option>
+  </select>
+
+    <select id="colors" title="Card color mode" data-i18n-title="colors_label">
+      <option value="2" selected data-i18n="colors_2">2 colors</option>
+      <option value="4" data-i18n="colors_4">4 colors</option>
     </select>
     <div class="audio-panel">
-      <button id="music-toggle" class="audio-btn" type="button" aria-pressed="true">♪ Musique</button>
-      <button id="sfx-toggle" class="audio-btn" type="button" aria-pressed="true">SFX</button>
-      <label class="vol"><span>Vol. musique</span><input type="range" id="music-vol" min="0" max="100" value="70"></label>
-      <label class="vol"><span>Vol. SFX</span><input type="range" id="sfx-vol" min="0" max="100" value="80"></label>
+      <button id="music-toggle" class="audio-btn" type="button" aria-pressed="true" data-i18n="music_btn">♪ Music</button>
+      <button id="sfx-toggle" class="audio-btn" type="button" aria-pressed="true" data-i18n="sfx_btn">SFX</button>
+      <label class="vol"><span data-i18n="vol_music">Music vol.</span><input type="range" id="music-vol" min="0" max="100" value="70"></label>
+      <label class="vol"><span data-i18n="vol_sfx">SFX vol.</span><input type="range" id="sfx-vol" min="0" max="100" value="80"></label>
     </div>
-    <button id="start" type="button">Jouer</button>
-      <button id="go" type="button" disabled>GO !</button>
+    <button id="start" type="button" data-i18n="play">Play</button>
     <div id="timer">--</div>
-    <div id="status">Prêt — choisissez la difficulté et le temps.</div>
+    <div id="status" data-i18n="idle">Ready - choose difficulty and time.</div>
   </div>
 </header>
 
 <main>
   <section class="board" id="board-human">
-    <h2>Votre plateau</h2>
+    <h2 data-i18n="human_board">Your board</h2>
     <div class="rows"></div>
-    <div class="total">Total : <b id="score-human">0</b> pts</div>
+    <div class="total"><span data-i18n="total_label">Total: </span><b id="score-human">0</b> <span data-i18n="pts">pts</span><button id="go" type="button" disabled data-i18n="go_btn">GO !</button></div>
   </section>
   <section class="board" id="board-ai">
-    <h2>Plateau de l'IA</h2>
+    <h2 data-i18n="ai_board">AI board</h2>
     <div class="rows"></div>
-    <div class="total">Total : <b id="score-ai">0</b> pts</div>
+    <div class="total"><span data-i18n="total_label">Total: </span><b id="score-ai">0</b> <span data-i18n="pts">pts</span></div>
   </section>
 </main>
 
 <footer>
   <div id="final" hidden>
-    <h2 id="final-title">Fin de partie</h2>
+    <h2 id="final-title" data-i18n="final_game">Game over</h2>
     <div class="breakdowns">
-      <div class="bd"><h3>Votre plateau</h3><div id="rows-human"></div></div>
-      <div class="bd"><h3>Plateau de l’IA</h3><div id="rows-ai"></div></div>
+      <div class="bd"><h3 data-i18n="human_board">Your board</h3><div id="rows-human"></div></div>
+      <div class="bd"><h3 data-i18n="ai_board">AI board</h3><div id="rows-ai"></div></div>
     </div>
     <p id="final-scores"></p>
     <p id="best"></p>
-    <button id="replay" type="button">Rejouer</button>
+    <button id="replay" type="button" data-i18n="replay">Replay</button>
   </div>
   <div id="msg"></div>
 </footer>
 
 <script src="js/deck.js"></script>
 <script src="js/game.js"></script>
+<script src="js/i18n.js"></script>
 <script id="audio" src="js/audio.js"></script>
 <script src="js/fx.js"></script>
 <script id="ui" src="js/ui.js"></script>

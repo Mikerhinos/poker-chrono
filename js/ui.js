@@ -30,11 +30,11 @@
   let colorMode = readLS(LS.colors, '2') === '4' ? '4' : '2';
 
   const REASONS = {
-    self: 'Déposé sur sa propre case : rien.',
-    out: 'Dépôt hors du plateau : annulé.',
-    invalid: 'Dépôt invalide : refusé.',
-    over: 'Partie terminée : plus de swap possible.',
-    not_running: 'Partie non lancée : lancez la partie d’abord.'
+    self: 'reason_self',
+    out: 'reason_out',
+    invalid: 'reason_invalid',
+    over: 'reason_over',
+    not_running: 'reason_not_running'
   };
 
   function msg(text) { $('#msg').textContent = text || ''; }
@@ -43,7 +43,7 @@
   /* Nom exact de la main d'une ligne : même fonction évaluatrice (G.evaluate5)
    * que le score — l'affichage et l'évaluation ne peuvent pas diverger. */
   function rowLabel(row) {
-    return G.isFull(row) ? G.evaluate5(row).label : 'Incomplet';
+    return G.I18N.handName(G.isFull(row) ? G.evaluate5(row).label : 'Incomplet');
   }
 
   /* v2 : seed aléatoire par partie réelle — CSPRNG (crypto.getRandomValues) si
@@ -56,7 +56,7 @@
     d.className = 'card s' + card.s;
     d.dataset.idx = String(idx);
     const rank = document.createElement('span');
-    rank.textContent = G.RANK_LABEL[card.r];
+    rank.textContent = G.I18N.rankLabel(card.r);
     const suit = document.createElement('span');
     suit.className = 'suit';
     suit.textContent = G.SUIT_LABEL[card.s];
@@ -151,7 +151,7 @@
   function onDragStart(e) {
     if (!state || !state.running || state.over) {
       e.preventDefault();
-      msg(state && state.over ? REASONS.over : 'Lancez la partie avant de déplacer des cartes.');
+      msg(state && state.over ? G.I18N.t(REASONS.over) : G.I18N.t('start_first'));
       return;
     }
     const from = e.currentTarget.dataset.idx;
@@ -176,10 +176,10 @@
     e.currentTarget.classList.remove('drag-over');
     dragging = false;
     if (!state) return;
-    if (state.over || !state.running) { msg(state.over ? REASONS.over : REASONS.not_running); return; }
+    if (state.over || !state.running) { msg(G.I18N.t(state.over ? REASONS.over : REASONS.not_running)); return; }
     const fromRaw = e.dataTransfer.getData('text/plain');
     const from = parseInt(fromRaw, 10);
-    if (fromRaw === '' || Number.isNaN(from)) { msg(REASONS.invalid); return; }
+    if (fromRaw === '' || Number.isNaN(from)) { msg(G.I18N.t(REASONS.invalid)); return; }
     const to = parseInt(e.currentTarget.dataset.idx, 10);
     const prevScores = [
       G.rowScore(state.boards.human[0]),
@@ -187,7 +187,7 @@
       G.rowScore(state.boards.human[2])
     ];
     const res = G.humanSwap(state, from, to);
-    if (!res.ok) { msg(REASONS[res.reason] || REASONS.invalid); return; }
+    if (!res.ok) { msg(G.I18N.t(REASONS[res.reason] || REASONS.invalid)); return; }
     renderBoard('human', { prevScores, flipIdx: [from, to] });
     updateScores();
     msg('');
@@ -202,7 +202,7 @@
     e.preventDefault();
     e.stopPropagation();
     dragging = false;
-    msg('Refusé : le plateau de l’IA est en lecture seule.');
+    msg(G.I18N.t('ai_readonly'));
   }
 
   function onDocumentDrop(e) {
@@ -210,24 +210,24 @@
     if (e.target && e.target.closest && e.target.closest('#board-human .cell')) return; // géré par la case
     e.preventDefault();
     dragging = false;
-    msg(REASONS.out);
+    msg(G.I18N.t(REASONS.out));
   }
 
   /* ---------- GO ! (v2.1, item 5 du brief) ----------
    * 1 pt / seconde restante, débloqué à 5 s, 2e clic idempotent,
    * l'IA ne fait jamais GO. */
   const GO_REASONS = {
-    no_state: 'Partie non lancée.',
+    no_state: 'go_no_state',
     already: '', // idempotent : 2e clic silencieux
-    over: 'Partie terminée.',
-    not_running: 'Lancez la partie d’abord.',
-    too_early: 'Trop tôt : le GO se débloque après 5 s.'
+    over: 'go_over',
+    not_running: 'go_not_running',
+    too_early: 'go_too_early'
   };
   function onGoClick() {
     if (!state) return;
     const res = G.goNow(state);
     if (!res.ok) {
-      if (res.reason !== 'already' && GO_REASONS[res.reason]) msg(GO_REASONS[res.reason]);
+      if (res.reason !== 'already' && GO_REASONS[res.reason]) msg(G.I18N.t(GO_REASONS[res.reason]));
       return;
     }
     endGame();
@@ -254,7 +254,7 @@
     sirenPlayed = false;
     $('#final').hidden = true;
     msg('');
-    status('C’est parti : ' + time + ' s, IA ' + difficulty + '.');
+    status(G.I18N.t('running', { time, diff: G.I18N.diffLabel(difficulty) }));
     renderAll({ animateAll: true });
     if (G.AUDIO) { G.AUDIO.ensure(); G.AUDIO.sfx.deal(); }
     if (G.FX) { G.FX.boardBurst('#board-human'); G.FX.boardBurst('#board-ai'); }
@@ -313,7 +313,7 @@
     rows.forEach((row, i) => {
       const div = document.createElement('div');
       div.className = 'row-line';
-      div.textContent = 'Ligne ' + (i + 1) + ' — ' + row.label + ' (' + row.score + ' pts)';
+      div.textContent = G.I18N.t('row_line', { n: i + 1, label: G.I18N.handName(row.label), score: row.score });
       el.appendChild(div);
     });
   }
@@ -322,16 +322,16 @@
     if (uiTimer) { clearInterval(uiTimer); uiTimer = null; }
     const r = state.result;
     $('#final-title').textContent =
-      r.winner === 'human' ? '🏆 Vous gagnez !'
-      : r.winner === 'ai' ? '💻 L’IA gagne.'
-      : '🤝 Égalité !';
+      r.winner === 'human' ? G.I18N.t('win')
+      : r.winner === 'ai' ? G.I18N.t('lose')
+      : G.I18N.t('draw');
     renderBreakdown($('#rows-human'), r.rowsHuman);
     renderBreakdown($('#rows-ai'), r.rowsAI);
     const goBonus = r.bonus || 0;
     $('#final-scores').textContent =
-      'Votre plateau : ' + r.human + ' pts' +
-      (goBonus > 0 ? ' + bonus GO : ' + goBonus + ' pts = ' + (r.human + goBonus) + ' pts' : '') +
-      ' — Plateau de l’IA : ' + r.ai + ' pts';
+      G.I18N.t('fs_human', { n: r.human }) +
+      (goBonus > 0 ? G.I18N.t('fs_go', { b: goBonus, t: r.human + goBonus }) : '') +
+      G.I18N.t('fs_ai', { n: r.ai });
     let best = 0;
     let record = false;
     try {
@@ -346,10 +346,10 @@
       }
     } catch (err) { /* stockage indisponible : on continue sans persistance */ }
     $('#best').textContent = record
-      ? 'Nouveau meilleur score : ' + best + ' pts'
-      : 'Meilleur score : ' + best + ' pts';
+      ? G.I18N.t('new_best', { n: best })
+      : G.I18N.t('best', { n: best });
     $('#final').hidden = false;
-    status('Terminé — ' + state.humanMoves + ' swap(s) humain(s), ' + state.aiMoves + ' swap(s) IA.');
+    status(G.I18N.t('ended', { h: state.humanMoves, a: state.aiMoves }));
     /* v2 : dopamine finale — SFX (explosion victoire / chute défaite) + FX (secousse + burst). */
     if (G.AUDIO) {
       if (r.winner === 'human') G.AUDIO.sfx.victoire();
@@ -379,6 +379,14 @@
     colorMode = e.target.value === '4' ? '4' : '2';
     writeLS(LS.colors, colorMode);
     applyColors();
+  });
+
+  /* v2.1.1 : langue (EN par défaut, persistance localStorage, <html lang> dynamique). */
+  const langSel = $('#lang');
+  langSel.value = G.I18N.getLang();
+  langSel.addEventListener('change', (e) => {
+    G.I18N.setLang(e.target.value);
+    renderAll();
   });
 
   /* v2 : contrôles audio (toggles ON/OFF + sliders séparés, persistés). */
@@ -444,6 +452,6 @@
   };
 
   /* Init : partie réelle (seed 128 bits CSPRNG interne), aucun handle public. */
-  state = G.createGame({ difficulty: 'normal', time: 20 });
+  state = G.createGame({ difficulty: 'normal', time: 30 });
   renderAll();
 })();

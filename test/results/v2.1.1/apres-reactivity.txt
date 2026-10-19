@@ -1,0 +1,12 @@
+Chrome CDP prêt sur 127.0.0.1:9343 pour reactivity.mjs
+  ok  état initial : contexte audio pas encore créé (aucun geste)
+  ok  1er clic musique : état = ON (le clic ne coupe pas l’état affiché)
+  ok  1er clic musique : contexte créé + gain > 0 (même tick, feedback immédiat)
+  ok  1er clic musique : feedback visuel immédiat (.on sur le bouton)
+  ok  1er clic SFX : état ON + gain > 0
+  ok  contexte audio « running » atteint
+  ok  feedback visuel immédiat : .on sur musique + SFX
+  ok  3 clics consécutifs : 3 basculements (OFF/ON/OFF)
+  ok  état final OFF reflété sur le bouton (aucun état fantôme)
+  ok  0 exception JS pendant la séquence
+reactivity : 10 ok, 0 fail

@@ -16,7 +16,7 @@ async function page(expr) { return evalJs(cdp, expr); }
 
 async function waitForPage() {
   for (let i = 0; i < 100; i++) {
-    const r = await page(`(document.readyState === 'complete' && window.G && window.G.version === '2.1.0' && window.G.UI) ? 'ready' : 'loading'`);
+    const r = await page(`(document.readyState === 'complete' && window.G && window.G.version === '2.1.1' && window.G.UI) ? 'ready' : 'loading'`);
     if (r === 'ready') return;
     await sleep(200);
   }
@@ -95,10 +95,10 @@ async function testSwapRejects() {
   await sleep(400);
 
   const res1 = await page(dropExpr(0, 'document.body', `document.querySelector('#msg').textContent`));
-  check('dépôt hors plateau → message d’annulation', /annul/i.test(res1), JSON.stringify(res1));
+  check('dépôt hors plateau → message d’annulation', /annul|cancel/i.test(res1), JSON.stringify(res1));
 
   const res2 = await page(dropExpr(1, `document.querySelector('#board-ai .cell[data-idx="3"]')`, `document.querySelector('#msg').textContent`));
-  check('dépôt sur le plateau IA → refus (lecture seule)', /lecture seule|Refus/i.test(res2), JSON.stringify(res2));
+  check('dépôt sur le plateau IA → refus (lecture seule)', /lecture seule|Refus|read-only/i.test(res2), JSON.stringify(res2));
 
   // Laisse la partie courir jusqu'au final (10 s).
   for (let i = 0; i < 40; i++) {

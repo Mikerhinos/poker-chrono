@@ -15,7 +15,7 @@ const page = (expr) => evalJs(cdp, expr);
 
 async function waitForPage() {
   for (let i = 0; i < 100; i++) {
-    const r = await page(`(document.readyState === 'complete' && window.G && window.G.version === '2.1.0' && window.G.UI) ? 'ready' : 'loading'`);
+    const r = await page(`(document.readyState === 'complete' && window.G && window.G.version === '2.1.1' && window.G.UI) ? 'ready' : 'loading'`);
     if (r === 'ready') return;
     await sleep(200);
   }
@@ -30,7 +30,7 @@ const VERIFY = `(() => {
     const names = document.querySelectorAll('#board-' + nm + ' .row .row-name');
     for (let r = 0; r < 3; r++) {
       const shown = names[r] ? names[r].textContent : '(manquant)';
-      if (shown !== bd[r].label) bad.push(nm + ':l' + r + ' affichée=' + JSON.stringify(shown) + ' évaluée=' + JSON.stringify(bd[r].label));
+      if (shown !== G.I18N.handName(bd[r].label)) bad.push(nm + ':l' + r + ' affichée=' + JSON.stringify(shown) + ' évaluée=' + JSON.stringify(G.I18N.handName(bd[r].label)));
     }
   }
   return bad.length === 0 ? 'OK' : 'BAD|' + bad.join(' || ');

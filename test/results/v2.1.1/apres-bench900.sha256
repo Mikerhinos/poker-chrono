@@ -1,0 +1,2 @@
+dec3dbddefe76453ec4601da9c34d7ab7429ce1eaf7beafec2ccbdc6b24f4e72 *-bench900-normalized (stdout sans ligne « total : 900 parties en X s » ni champ JSON « wall » — horloge réelle, non déterministe)
+312841cd81911460d998d4b4d6a026cfab11b4c7efca4559a8443bc828bc357a *-avant-baseline (normalisation identique, wall 111.5 inclus dans le champ JSON avant patch)

@@ -50,7 +50,8 @@
   #board-human .cell.drag-over { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent); }
   .cell.flash { animation:flash .45s ease-out; }
   @keyframes flash { 0% { box-shadow:0 0 0 3px var(--good); } 100% { box-shadow:0 0 0 0 transparent; } }
-  .total { margin-top:8px; font-size:.95rem; color:var(--text); }
+  .total { display:flex; align-items:center; gap:.35rem; margin-top:8px; font-size:.95rem; color:var(--text); }
+.total #go { margin-left:auto; }
   .total b { color:var(--accent); font-size:1.1rem; }
   footer { padding:0 18px 22px; }
   #final {

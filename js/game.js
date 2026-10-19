@@ -107,7 +107,7 @@ function swapCells(board, i, j) {
 
   function createGame(opts = {}) {
     const difficulty = DIFFICULTIES.includes(opts.difficulty) ? opts.difficulty : 'normal';
-    const time = TIME_OPTIONS.includes(opts.time) ? opts.time : 20;
+    const time = TIME_OPTIONS.includes(opts.time) ? opts.time : 30;
     let rngShuffle, rngHuman, rngAI;
     if (Number.isInteger(opts.seed) && opts.seed >= 0) {
       // Chemin override 32 bits (portes de test) : mulberry32 strictement
@@ -316,7 +316,7 @@ function swapCells(board, i, j) {
   }
 
   globalThis.G = {
-    version: '2.1.0',
+    version: '2.1.1',
     // barème verbatim
     RANKS, RANK_LABEL, SUIT_LABEL, SUIT_NAME, HAND_SCORES, HAND_LABEL,
     isValidCard, evaluate5, isFull, rowScore, boardScore, boardBreakdown,

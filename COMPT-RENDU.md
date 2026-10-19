@@ -340,3 +340,80 @@ node test/run-headless.mjs poc-repro.mjs 9420 </dev/null   # 0 FAIL
 - **Aucune stat/cap modifiée** : code de jeu, tests, bench, cap GO (min=6, P1=52, cap 16) inchangés — hash de `test/g2g4-result.txt` inchangé avant/après (`33e6d93f…`).
 - **Re-run (2026-10-19)** : `node test/g1-scores.js` → 41 OK, 0 FAIL · `node test/max-board.mjs` → 7 OK, 0 FAIL.
 - Manifeste `sha256-final-v21.txt` régénéré (mêmes 46 chemins, même ordre/format « N|hash *./path ») → recalcul **46/46 OK** par re-lecture.
+
+## v2.1.1 — GO sur le plateau, 30 s par défaut, i18n 5 langues (2026-10-19)
+
+**Base** : `6223b05` (HEAD, tree propre). **Commit** : commit atomique unique au-dessus de `6223b05` (subject conventionnel `feat: GO placement, 30 s par défaut, i18n 5 langues + portes + manifeste`). **Trace** : D-20261016-02 (review_trigger « défaut 20→30 s »). **Hors périmètre** : P2 multijoueur (v2.2 PeerJS).
+
+### Décisions (et alternatives écartées)
+
+1. **Déplacement UI du bouton GO, sémantique inchangée** : `<button id="go" disabled>` retiré de `<header>` > `.controls` (à côté de `#start`) et replacé dans `<section class="board" id="board-human">`, à l'intérieur de la ligne de score `.total`, à droite de `#score-human`. Alternatives écartées : (a) sous la grille de cartes — moins visible ; (b) bouton flottant — non conforme à la contrainte « aligné sur la ligne de score, CSS minimal ». `id`, bindings, état `disabled`, invariants (cap 16, fenêtre 5 s, idempotent, l'IA ne fait jamais GO) strictement inchangés → `go-logic` + `go-ui` + `go-ui-85` re-run, toutes vertes.
+2. **Défaut 30 s** — 3 points modifiés : `index.html` (`<option value="20" selected>` → `<option value="30" selected>`, options 10/20/30/60/90 conservées), fallback `js/game.js` (20→30), init `js/ui.js` (`time: 20` → `time: 30`). **Trace D-20261016-02** (review_trigger). Protocole bench **inchangé** : `test/g2g4-headless.js` garde `time: 20` explicite → le défaut ne s'y applique jamais, hash de sortie inchangé (vérifié ci-dessous). Grep repo-wide : aucune autre dépendance implicite au défaut 20 s (tous les `createGame` des tests passent `time` explicite).
+3. **i18n 5 langues (EN défaut, FR, ES, IT, DE)** : nouveau module `js/i18n.js` (IIFE, zéro DOM, s'attache à `globalThis.G.I18N`) plutôt qu'une table inline dans `ui.js` — garde `ui.js` lisible, isolable, testable headless ; 60 clés × 5 dictionnaires. API : `G.I18N.t(clé, ...vars)` (placeholders `{...}`), `G.I18N.handName(étiquette)` (étiquettes canoniques FR de `deck.js` — Quinte, Couleur, Full, Carré, Brelan, Paire, Ligne, Incomplet, Quatre, Carte haute — → noms localisés), `G.I18N.apply()` (title, meta, éléments `data-i18n`). Menu `<select id="lang">` dans le header : drapeaux emoji + noms (🇬🇧 English, 🇫🇷 Français, 🇪🇸 Español, 🇮🇹 Italiano, 🇩🇪 Deutsch) ; EN par défaut ; persistance `localStorage` (`poker-chrono-lang`) ; `<html lang>` dynamique. Traduites : toutes les chaînes user-facing (~45 : statuts, messages GO/swap, titres de fin, lignes de décomposition, 9 mains du barème, difficultés, Jouer, GO !, Total, pts, best score…) + rangs de cartes par langue (FR V/D/R ; EN/ES/IT/DE J/Q/K ; A = as partout). Labels de rangs gérés dans `ui.js`/`deck.js` via `G.I18N` sans toucher au barème (labels canoniques FR conservés dans `deck.js`).
+4. **Nouvelle porte P15** (`test/g15-i18n.mjs`, headless CDP, port 9359) — déterministe : 5 dictionnaires complets (0 clé vide, clés identiques entre langues), 0 chaîne FR hors dictionnaires sur la page EN, EN par défaut, `<html lang>` dynamique, persistance localStorage.
+5. **Adaptation des portes existantes** : 12 pins de version `2.1.0` → `2.1.1` ; `g8-scan` compte modules 5→6 (`readdirSync` → auto-inclusion de `js/i18n.js`) ; `g5-rownames` via `G.I18N.handName()` ; élargissements regex `g5-ui` (annul/cancel, lecture seule/Refus/read-only) et `g13-best` (nouveau meilleur/new best, meilleur score/best score) ; `g1-scores` (Node, sans DOM) inchangé — le fallback FR de `deck.js` est préservé ; `w3c`, `reactivity`, `go-ui`, `go-ui-85` inchangées (textuellement neutres, vérifié).
+6. **Manifeste** : `sha256-final-v21.txt` régénéré — **48 entrées** (46 + `js/i18n.js` + `test/g15-i18n.mjs`), même ordre/format.
+
+### Portes — compte OK/FAIL avant / après (2026-10-19, host Windows, Node 20, foreground)
+
+| Porte | Avant (`6223b05`) | Après (patché) |
+|---|---|---|
+| `g1-scores.js` | 41 OK / 0 FAIL | 41 OK / 0 FAIL |
+| `g3-swap.js` | 24 OK / 0 FAIL | 24 OK / 0 FAIL |
+| `g2g4-headless.js` (bench 900) | 6 OK / 0 FAIL, hash `312841cd…` | 6 OK / 0 FAIL, hash inchangé (×2 runs) |
+| `max-board.mjs` | 7 OK / 0 FAIL | 7 OK / 0 FAIL |
+| `go-logic.mjs` | 18 OK / 0 FAIL | 18 OK / 0 FAIL |
+| `w3c.mjs` | 2 OK / 0 FAIL | 2 OK / 0 FAIL |
+| `g8-scan.mjs` | 23 OK / 0 FAIL (5 modules) | 24 OK / 0 FAIL (6 modules) |
+| `g14-innertest.mjs` | OK / 0 FAIL | OK / 0 FAIL |
+| `g4-colors.mjs` (9344) | 18 OK / 0 FAIL | 18 OK / 0 FAIL |
+| `g5-rownames.mjs` (9351) | 4 OK / 0 FAIL | 4 OK / 0 FAIL |
+| `g5-run.mjs` (P10, `PORT=9347`) | 20 OK / 0 FAIL | 20 OK / 0 FAIL |
+| `g6-audio.mjs` (9348) | 15 OK / 0 FAIL | 15 OK / 0 FAIL |
+| `g7-fx.mjs` (9345) | 8 OK / 0 FAIL | 8 OK / 0 FAIL |
+| `g9-boards.mjs` (9347) | 60 OK / 0 FAIL (60 seeds) | 60 OK / 0 FAIL (60 seeds) |
+| `g11-noscore.mjs` (9353) | OK / 0 FAIL | OK / 0 FAIL |
+| `g12-seed.mjs` (9355) | OK / 0 FAIL | OK / 0 FAIL |
+| `g13-best.mjs` (9352) | OK / 0 FAIL | OK / 0 FAIL |
+| `g15-i18n.mjs` (9359, **nouvelle**) | — | **20 OK / 0 FAIL** |
+| `go-ui.mjs` (9346) | 11 OK / 0 FAIL | 11 OK / 0 FAIL |
+| `go-ui-85.mjs` (9350) | 6 OK / 0 FAIL | 6 OK / 0 FAIL |
+| `reactivity.mjs` (9343) | 10 OK / 0 FAIL | 10 OK / 0 FAIL |
+| `poc-repro.mjs` (9357) | Non reproductible (5 vecteurs) | Non reproductible (5 vecteurs) |
+
+**Totaux : 21 portes existantes vertes avant ET après + P15 verte après = 22/22 vertes.**
+
+### Bench 900 (foreground — do_not_repeat AT-20261019-06 respecté : aucun background)
+
+- Commande : `node test/g2g4-headless.js` (exit 0, ~112 s, 0 erreur JS), exécutée **2 fois** après le patch (la 1re fois du run 2 a échoué sur le piège tty du host, réessai immédiat OK — voir « Tentatives »).
+- **Hash de sortie INCHANGÉ** : `test/g2g4-result.txt` byte-identique avant/après — sha256 brut `312841cd81911460d998d4b4d6a026cfab11b4c7efca4559a8443bc828bc357a` (= HEAD git `33e6d93f…`) ; hash normalisé (wall-time retiré) `dec3dbdd…` identique sur **3/3 exécutions** (avant, après run 1, après run 2). Seule différence : wall-time (111,5 s → 111,8 s → 111,6 s), non déterministe par nature et hors hash de sortie.
+- Stats inchangées : min=6, P1=52, médiane=22, max=215 ; gradient IA strict 136.09 < 167.89 < 209.57 et 94,7 % < 99,3 % < 99,7 %.
+- Preuves : `test/results/v2.1.1/avant-bench900.sha256`, `apres-bench900.sha256`, `apres-bench900-run2.txt`.
+
+### Fichiers modifiés / créés
+
+- `index.html` (bouton GO déplacé, `<select id="lang">`, option 30 s selected, script `js/i18n.js`)
+- `js/i18n.js` (**nouveau** — 60 clés × 5 langues, IIFE)
+- `js/ui.js` (init 30 s, `G.I18N.t()` sur toutes les chaînes user-facing, rangs via i18n)
+- `js/game.js` (fallback 30 s, version `2.1.1`)
+- `css/base.css` (alignement du bouton GO sur la ligne de score)
+- `test/g15-i18n.mjs` (**nouveau**, porte P15, port 9359)
+- `test/g5-ui.mjs`, `test/g5-rownames.mjs`, `test/g13-best.mjs` (adaptations i18n)
+- `test/g8-scan.mjs` (5→6 modules), `test/go-ui.mjs`, `test/go-ui-85.mjs`, `test/g14-innertest.mjs`, `test/poc-repro.mjs` (+ 8 autres) — pins `2.1.1`
+- `README.md`, `COMPT-RENDU.md`, `ANCRE-PARTS.md` (alignés dans le même diff)
+- `sha256-final-v21.txt` (régénéré — **48 entrées**)
+- `test/results/v2.1.1/` (logs avant/après + sha256 bench)
+
+### Tentatives (échecs / inconclusifs, avec cause)
+
+- **Patch initial multi-fichiers échoué** (assert d'ancrage sur `index.html`) — cause : divergence mineure de l'ancrage attendu vs octets réels (tabulations/attributs). Résolu par re-dump octet à octet et `str.replace` Python avec compteur d'occurrences exact avant écriture. Aucune corruption : les fichiers non patchés n'ont jamais été écrits.
+- **Typo dans le remplacement `fs_go` de `js/ui.js`** détectée au re-vérification — corrigée dans le patch suivant, porte `go-ui` verte.
+- **Ancre `go-ui.mjs` (pin de version)** : 1er essai raté (ancrage différent sur disque), corrigé au 2e.
+- **`g5-rownames.mjs`** : 3 tentatives d'ancrage (concaténation de chaînes, pas de template literals) — résolu avec l'ancrage réel du disque.
+- **« stdin is not a tty » (host)** : 1er appel terminal d'un batch headless (bench run 2, batch C2, worktree avant-go-logic) — le node du 1er appel ne démarre pas et la ligne d'erreur peut contaminer un `tee`. Contournement : réessai immédiat + redirection directe `> f 2>&1` (sans `tee`) pour l'`avant-go-logic.txt` capturé sur worktree à `6223b05` (18 OK / 0 FAIL, propre).
+- **`g5-run.mjs`** : ne lit pas le port argv mais `process.env.PORT` — invoqué `PORT=9347 node test/g5-run.mjs` (vert).
+- **Rien d'autre d'omis** : toutes les portes listées ci-dessus ont été exécutées avant et après, logs dans `test/results/v2.1.1/`.
+
+### Manifeste
+
+`sha256-final-v21.txt` régénéré après les ajouts (docs + `js/i18n.js` + `test/g15-i18n.mjs`) : **48 entrées**, format `<sha256> * <path>`, recalculé par re-lecture (48/48 OK).

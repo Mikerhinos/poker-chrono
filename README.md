@@ -1,6 +1,6 @@
 # Poker Chrono — POC
 
-Jeu de cartes **humain vs IA** en une page HTML (interface française), 3 plateaux de 5 cartes (3×5),
+Jeu de cartes **humain vs IA** en une page HTML (5 langues — anglais par défaut, français, espagnol, italien, allemand), 3 plateaux de 5 cartes (3×5),
 joué en temps limité (chrono) avec une mécanique de **swap** de cartes par drag & drop.
 
 Le barème d'évaluation (scores des mains) est réutilisé **verbatim** (à l'octet près) depuis le projet
@@ -47,16 +47,17 @@ Le barème d'évaluation (scores des mains) est réutilisé **verbatim** (à l'o
 
 ## 3. Architecture (split v2.1 : shell `index.html` + `css/` + `js/`)
 
-Shell HTML + 4 feuilles CSS + 5 modules JS, sans dépendance, sans serveur — ouvrir `index.html` dans un navigateur suffit.
+Shell HTML + 4 feuilles CSS + 6 modules JS, sans dépendance, sans serveur — ouvrir `index.html` dans un navigateur suffit.
 
 1. **`js/deck.js`** (pur) — barème verbatim poker-rush (`RANKS`, `RANK_LABEL`, `SUIT_LABEL`, `SUIT_NAME`, `HAND_SCORES`, `HAND_LABEL`, `isValidCard`, `evaluate5`, `isFull`, `rowScore`, `boardScore`, `boardBreakdown`) + config (`DIFFICULTIES`, `TIME_OPTIONS`, `AI_INTERVAL`, `PAIRS`) + PRNG seedés (mulberry32, xoshiro128**).
 2. **`js/game.js`** (pur, sans DOM) — s'attache à `globalThis.G` :
    - **Logique Poker Chrono** : `createGame`, `start`, `tick`, `humanSwap`, `aiStep`, `humanRandomSwap`, `simulateGame`, `cardText` + mécanique **GO** (activation 5 s, +1 pt/s restante, 2e clic idempotent, `GO_BONUS_CAP = 16`).
    - **Déterminisme** : générateur pseudo-aléatoire seedé — `createGame({ seed })` re-joue exactement la même partie (utilisé par les tests).
    - **Simulation headless** : `simulateGame({ difficulty, time, seed })` déroule la partie tick par tick (100 ms) avec un humain aléatoire — aucun DOM requis, utilisable dans Node.
-3. **`js/ui.js`** (avec DOM) — rendu des plateaux, drag & drop natif (`dragstart`/`dragover`/`drop`/`dragend` + `DataTransfer`), chrono, écran final (score final avec bonus GO), bouton GO, toggles.
-4. **`js/audio.js`** (WebAudio) — musique de fond + 9 SFX, toggles/volumes persistés ; 1er clic sur un toggle = **armement** du son (fix réactivité v2.1).
-5. **`js/fx.js`** (canvas 2D) — particules poolées, lueurs, secousse d'écran.
+3. **`js/i18n.js`** (pur, s'attache à `globalThis.G.I18N`) — 5 dictionnaires de 60 clés (EN défaut, FR, ES, IT, DE) : `G.I18N.t(clé, ...vars)`, `G.I18N.handName(étiquette)` (étiquettes canoniques `deck.js` → noms de mains localisés), `G.I18N.apply()` (title, meta, éléments `data-i18n`), persistance `localStorage` (`poker-chrono-lang`), `<html lang>` dynamique.
+4. **`js/ui.js`** (avec DOM) — rendu des plateaux, drag & drop natif (`dragstart`/`dragover`/`drop`/`dragend` + `DataTransfer`), chrono, écran final (score final avec bonus GO), bouton GO, toggles.
+5. **`js/audio.js`** (WebAudio) — musique de fond + 9 SFX, toggles/volumes persistés ; 1er clic sur un toggle = **armement** du son (fix réactivité v2.1).
+6. **`js/fx.js`** (canvas 2D) — particules poolées, lueurs, secousse d'écran.
 
 ### Niveaux d'IA
 
@@ -189,3 +190,42 @@ node test/run-headless.mjs reactivity.mjs 9348  # réactivité : 1 clic = 1 éta
 ```
 
 Stats bench 900 (humains) : **min=6, P1=52, médiane=22, max=215** ; gradient IA strict 136.09 < 167.89 < 209.57 et 94.7 % < 99.3 % < 99.7 % (900 parties en ~112 s, 0 erreur JS). Log : `test/results/bench-900-final.log`. Détails, statistiques et toutes les tentatives (échecs inclus) : `COMPT-RENDU.md` § v2.1.0.
+
+## v2.1.1 — GO sur le plateau, 30 s par défaut, i18n 5 langues (2026-10-19)
+
+- **Bouton GO déplacé sur le plateau du joueur** : de `<header>` (`.controls`, à côté de **Jouer**) vers `<section class="board" id="board-human">`, à droite de la ligne de score (`.total` / `#score-human`) — on voit quel bouton lancer la manche. `id`, bindings, état `disabled` et invariants (cap bonus 16, fenêtre 5 s, idempotent, l'IA ne fait jamais GO) inchangés — déplacement UI pur (re-runs `go-logic` + `go-ui` + `go-ui-85`, toutes vertes).
+- **Défaut 30 s** (avant 20 s) : `index.html` (`<option value="30" selected>`, options 10/20/30/60/90 conservées), fallback `js/game.js`, init `js/ui.js`. Protocole bench 900 **inchangé** : `time: 20` explicite dans `test/g2g4-headless.js` → hash déterministe inchangé, `test/g2g4-result.txt` byte-identique.
+- **i18n 5 langues** — **EN (défaut), FR, ES, IT, DE** : menu de langue dans le header, drapeaux + noms (`<select id="lang">`, 🇬🇧 🇫🇷 🇪🇸 🇮🇹 🇩🇪), persistance `localStorage` (`poker-chrono-lang`), `<html lang>` dynamique. Nouveau module `js/i18n.js` (IIFE, zéro DOM, **60 clés/langue**) : `G.I18N.t(clé, ...vars)`, `G.I18N.handName(étiquette)`, `G.I18N.apply()`. Traduites : toutes les chaînes user-facing (~45 : statuts, messages GO/swap, titres de fin, lignes de décomposition, 9 mains du barème, difficultés, Jouer, GO !, Total, pts, best score…) + labels de rangs de cartes par langue (FR V/D/R ; EN/ES/IT/DE J/Q/K ; A = as pour toutes).
+- **Nouvelle porte P15** (`test/g15-i18n.mjs`, headless CDP, port 9359) : 5 dictionnaires complets (0 clé vide), 0 chaîne FR hors dictionnaires sur la page EN, EN par défaut, `<html lang>` dynamique, persistance localStorage → **20 OK, 0 FAIL**.
+- **Version `2.1.1`** dans `js/game.js` et toutes les portes (12 pins mis à jour, `g8-scan` compte 5→6 modules, `g15-i18n` créée).
+- **Manifeste** `sha256-final-v21.txt` régénéré : **48 entrées** (46 + `js/i18n.js` + `test/g15-i18n.mjs`).
+- **Hors périmètre** : P2 multijoueur (réservé v2.2 — PeerJS).
+
+### Tests v2.1.1 (22 contrôles : 21 portes existantes + P15 nouvelle, toutes vertes avant et après)
+
+```bash
+node test/g1-scores.js                        # P1 barème 52 cartes            → 41 OK
+node test/g3-swap.js                          # P2 swap                        → 24 OK
+node test/g2g4-headless.js                    # P3 bench 900 + gradient        → 6 OK (exit 0)
+node test/max-board.mjs                       # Max plateau théorique          → 7 OK
+node test/go-logic.mjs                        # Logique GO                     → 18 OK
+node test/w3c.mjs                             # W3C statique                   → 2 OK
+node test/g8-scan.mjs                         # P8 zéro dépendance (6 modules) → 24 OK
+node test/g14-innertest.mjs                   # P14 scan rendu dynamique       → OK
+node test/run-headless.mjs g4-colors.mjs 9344   # P4 couleurs                   → 18 OK
+node test/run-headless.mjs g5-rownames.mjs 9351 # P5 noms de mains (i18n)      → 4 OK
+node test/g5-run.mjs                           # P10 drag & drop (g5-ui)        → 20 OK
+node test/run-headless.mjs g6-audio.mjs 9348   # P6 audio                       → 15 OK
+node test/run-headless.mjs g7-fx.mjs 9345      # P7 FX                          → 8 OK
+node test/run-headless.mjs g9-boards.mjs 9347  # P9 plateaux (60 seeds)         → 60 OK
+node test/run-headless.mjs g11-noscore.mjs 9353 # P11 API publique             → 11 OK
+node test/run-headless.mjs g12-seed.mjs 9355   # P12 seeds                      → 10 OK
+node test/run-headless.mjs g13-best.mjs 9352   # P13 best score                 → 6 OK
+node test/run-headless.mjs g15-i18n.mjs 9359   # P15 i18n (nouvelle)            → 20 OK
+node test/run-headless.mjs go-ui.mjs 9346      # UI GO (bouton sur le plateau)  → 11 OK
+node test/run-headless.mjs go-ui-85.mjs 9350   # GO à t = 85 s                  → 6 OK
+node test/run-headless.mjs reactivity.mjs 9343 # Réactivité                     → 10 OK
+node test/run-headless.mjs poc-repro.mjs 9357  # PoC L34K (5 vecteurs)          → Non reproductible
+```
+
+Stats bench 900 inchangées (déterministe, `time: 20` explicite) : **min=6, P1=52, médiane=22, max=215** ; gradient IA strict 136.09 < 167.89 < 209.57 ; `test/g2g4-result.txt` byte-identique avant/après (hash de sortie inchangé). Détails, statistiques et toutes les tentatives (échecs inclus) : `COMPT-RENDU.md` § v2.1.1.
