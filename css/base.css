@@ -33,6 +33,10 @@
   section.board {
     background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px;
   }
+  /* v2.1.1 décision D : contenu du plateau joueur (h2, .rows, .total) aligné à droite
+     dans son cadre — le GO reste à droite de la ligne de score ; mobile <900px inchangé
+     (1 colonne) car l'alignement est transversal uniquement. */
+  #board-human { display:flex; flex-direction:column; align-items:flex-end; }
   section.board h2 { margin:0 0 10px; font-size:1rem; color:var(--muted); }
   .row { display:grid; grid-template-columns:repeat(5, 62px); gap:6px; margin-bottom:8px; }
   .cell {

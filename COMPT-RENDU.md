@@ -353,6 +353,7 @@ node test/run-headless.mjs poc-repro.mjs 9420 </dev/null   # 0 FAIL
 4. **Nouvelle porte P15** (`test/g15-i18n.mjs`, headless CDP, port 9359) — déterministe : 5 dictionnaires complets (0 clé vide, clés identiques entre langues), 0 chaîne FR hors dictionnaires sur la page EN, EN par défaut, `<html lang>` dynamique, persistance localStorage.
 5. **Adaptation des portes existantes** : 12 pins de version `2.1.0` → `2.1.1` ; `g8-scan` compte modules 5→6 (`readdirSync` → auto-inclusion de `js/i18n.js`) ; `g5-rownames` via `G.I18N.handName()` ; élargissements regex `g5-ui` (annul/cancel, lecture seule/Refus/read-only) et `g13-best` (nouveau meilleur/new best, meilleur score/best score) ; `g1-scores` (Node, sans DOM) inchangé — le fallback FR de `deck.js` est préservé ; `w3c`, `reactivity`, `go-ui`, `go-ui-85` inchangées (textuellement neutres, vérifié).
 6. **Manifeste** : `sha256-final-v21.txt` régénéré — **48 entrées** (46 + `js/i18n.js` + `test/g15-i18n.mjs`), même ordre/format.
+7. **Plateau joueur aligné à droite (D)** : `#board-human { display:flex; flex-direction:column; align-items:flex-end; }` (`css/base.css`) — h2, `.rows`, `.total` (bouton GO restant à droite de la ligne de score) collent au bord droit intérieur du cadre ; à 1920×1080 le plateau joueur est immédiatement à gauche du plateau IA (`main` = grid 1fr 1fr, écart = gap du grid). **Alternatives écartées** : (a) `margin-left:auto` sur chaque enfant — 3 règles couplées, fragile à tout futur flex-row ; (b) `justify-content:flex-end` sur `.total` seul — ne déplace ni la grille de cartes ni le titre ; (c) largeurs fixes / grilles explicites — casse le responsive mobile <900px. Choix : 1 règle de conteneur, aucun paramètre magique, zéro changement de logique de jeu, `#board-ai` intact, mobile inchangé.
 
 ### Portes — compte OK/FAIL avant / après (2026-10-19, host Windows, Node 20, foreground)
 
@@ -371,7 +372,8 @@ node test/run-headless.mjs poc-repro.mjs 9420 </dev/null   # 0 FAIL
 | `g5-run.mjs` (P10, `PORT=9347`) | 20 OK / 0 FAIL | 20 OK / 0 FAIL |
 | `g6-audio.mjs` (9348) | 15 OK / 0 FAIL | 15 OK / 0 FAIL |
 | `g7-fx.mjs` (9345) | 8 OK / 0 FAIL | 8 OK / 0 FAIL |
-| `g9-boards.mjs` (9347) | 60 OK / 0 FAIL (60 seeds) | 60 OK / 0 FAIL (60 seeds) |
+| `g9-boards.mjs` (9347) | 31 OK / 0 FAIL (30 seeds + 1 global) | 39 OK / 0 FAIL (30 seeds + 1 global + 8 checks D) |
+| **Check D** (g9, 1920×1080, D1-D8) | 7 OK / 1 FAIL (D1 : grille à 435 px du bord droit intérieur) | **8 OK / 0 FAIL** (D1 : d=0 px ; D2-D8 OK) |
 | `g11-noscore.mjs` (9353) | OK / 0 FAIL | OK / 0 FAIL |
 | `g12-seed.mjs` (9355) | OK / 0 FAIL | OK / 0 FAIL |
 | `g13-best.mjs` (9352) | OK / 0 FAIL | OK / 0 FAIL |
@@ -381,14 +383,15 @@ node test/run-headless.mjs poc-repro.mjs 9420 </dev/null   # 0 FAIL
 | `reactivity.mjs` (9343) | 10 OK / 0 FAIL | 10 OK / 0 FAIL |
 | `poc-repro.mjs` (9357) | Non reproductible (5 vecteurs) | Non reproductible (5 vecteurs) |
 
-**Totaux : 21 portes existantes vertes avant ET après + P15 verte après = 22/22 vertes.**
+**Totaux : 21 portes existantes vertes avant ET après + P15 verte après = 22/22 vertes ; check D (extension g9) : 7/8 avant fix → 8/8 après fix.**
 
 ### Bench 900 (foreground — do_not_repeat AT-20261019-06 respecté : aucun background)
 
 - Commande : `node test/g2g4-headless.js` (exit 0, ~112 s, 0 erreur JS), exécutée **2 fois** après le patch (la 1re fois du run 2 a échoué sur le piège tty du host, réessai immédiat OK — voir « Tentatives »).
-- **Hash de sortie INCHANGÉ** : `test/g2g4-result.txt` byte-identique avant/après — sha256 brut `312841cd81911460d998d4b4d6a026cfab11b4c7efca4559a8443bc828bc357a` (= HEAD git `33e6d93f…`) ; hash normalisé (wall-time retiré) `dec3dbdd…` identique sur **3/3 exécutions** (avant, après run 1, après run 2). Seule différence : wall-time (111,5 s → 111,8 s → 111,6 s), non déterministe par nature et hors hash de sortie.
+- **Hash de sortie INCHANGÉ** : `test/g2g4-result.txt` byte-identique avant/après — sha256 brut `33e6d93f…` (identique au HEAD git) ; hash normalisé de référence `312841cd81911460d998d4b4d6a026cfab11b4c7efca4559a8443bc828bc357a` (stdout sans ligne `total : 900 parties en…`, champ `wall` refermé à 111,5 — valeur baseline) ; variante sans champ wall `dec3dbdd…` identique sur 3/3 exécutions (avant, après run 1, après run 2). Seule variance : wall-time (111,5 s → 111,8 s → 111,6 s), horloge réelle, non déterministe et hors hash de sortie.
 - Stats inchangées : min=6, P1=52, médiane=22, max=215 ; gradient IA strict 136.09 < 167.89 < 209.57 et 94,7 % < 99,3 % < 99,7 %.
 - Preuves : `test/results/v2.1.1/avant-bench900.sha256`, `apres-bench900.sha256`, `apres-bench900-run2.txt`.
+- **Re-run phase D (2026-10-19, Node 26.7.0, foreground, unique)** : `node test/g2g4-headless.js` → exit 0, 6 OK / 0 FAIL, wall 113,1 s. **Hash de sortie INCHANGÉ** : stdout normalisé (ligne `total` retirée, wall refermé à 111,5) = `312841cd81911460d998d4b4d6a026cfab11b4c7efca4559a8443bc828bc357a` sur ce run (preuve `test/results/v2.1.1-D/rerun/bench900-normalized.sha256`) ; `test/g2g4-result.txt` reste byte-identique à HEAD (sha256 brut `33e6d93f…`) — le fix CSS n'a aucun effet sur la logique de jeu.
 
 ### Fichiers modifiés / créés
 
@@ -396,8 +399,10 @@ node test/run-headless.mjs poc-repro.mjs 9420 </dev/null   # 0 FAIL
 - `js/i18n.js` (**nouveau** — 60 clés × 5 langues, IIFE)
 - `js/ui.js` (init 30 s, `G.I18N.t()` sur toutes les chaînes user-facing, rangs via i18n)
 - `js/game.js` (fallback 30 s, version `2.1.1`)
-- `css/base.css` (alignement du bouton GO sur la ligne de score)
+- `css/base.css` (alignement du bouton GO sur la ligne de score + **règle D** `#board-human { display:flex; flex-direction:column; align-items:flex-end; }`)
 - `test/g15-i18n.mjs` (**nouveau**, porte P15, port 9359)
+- `test/g9-boards.mjs` (**check D D1-D8** — 1920×1080 via CDP, `Emulation.setDeviceMetricsOverride`)
+- `test/probe-d.mjs` (**nouveau** — outil de diagnostic des rects Chromium, non couvert par le manifeste 48)
 - `test/g5-ui.mjs`, `test/g5-rownames.mjs`, `test/g13-best.mjs` (adaptations i18n)
 - `test/g8-scan.mjs` (5→6 modules), `test/go-ui.mjs`, `test/go-ui-85.mjs`, `test/g14-innertest.mjs`, `test/poc-repro.mjs` (+ 8 autres) — pins `2.1.1`
 - `README.md`, `COMPT-RENDU.md`, `ANCRE-PARTS.md` (alignés dans le même diff)
@@ -412,8 +417,11 @@ node test/run-headless.mjs poc-repro.mjs 9420 </dev/null   # 0 FAIL
 - **`g5-rownames.mjs`** : 3 tentatives d'ancrage (concaténation de chaînes, pas de template literals) — résolu avec l'ancrage réel du disque.
 - **« stdin is not a tty » (host)** : 1er appel terminal d'un batch headless (bench run 2, batch C2, worktree avant-go-logic) — le node du 1er appel ne démarre pas et la ligne d'erreur peut contaminer un `tee`. Contournement : réessai immédiat + redirection directe `> f 2>&1` (sans `tee`) pour l'`avant-go-logic.txt` capturé sur worktree à `6223b05` (18 OK / 0 FAIL, propre).
 - **`g5-run.mjs`** : ne lit pas le port argv mais `process.env.PORT` — invoqué `PORT=9347 node test/g5-run.mjs` (vert).
+- **Check D initial : 4 FAIL (D1-D4) au 1er run avant** — cause : les bords intérieurs de référence (`innerRH`/`innerLA`) étaient calculés sans les `padding` des sections. Fix : bords intérieurs = bordure + padding des sections (`hr[2] - borderRight - paddingRight`) ; diagnostic complet des rects réels via `test/probe-d.mjs` (cartes humaines x=167/235/303/371/439, cadre `#board-human` bord droit = 936 px). **Run avant final** (références corrigées, CSS non patché) : **1 seul FAIL — D1, grille à 435 px** du bord droit intérieur, D2-D8 OK. Conditions : Chromium headless 1920×1080, `node test/run-headless.mjs g9-boards.mjs 9347` (logs `test/results/v2.1.1-D/avant-g9-boards.txt`).
+- **`test/probe-d.mjs` — 5 corrections successives** : (a) parenthèse fermante manquante de l'IIFE ; (b) `import CDP from './cdp.mjs'` → `import { connect, evalJs } from './cdp.mjs'` (pas d'export par défaut) ; (c) `evalJs` exige 2 args (`evalJs(cdp, expr)`) ; (d) **Node 26.7.0** : `import { os } from 'node:os'` supprimé (alias legacy retirés) → `import os from 'node:os'` ; (e) `connect('127.0.0.1:9471', …)` **sans** préfixe `http://` (contrat de `cdp.mjs`) + sortie `JSON.stringify` pour parsage fiable. Essai inconclusif connexe : spawn Chrome manuel + `curl 127.0.0.1:9472` en timeout (exit -1, non bloquant) — la probe fonctionne ensuite via le spawn interne de `cdp.mjs`.
+- **D6 réécrit** : la 1re formulation (« plateau IA non modifié ») mesurait une position non encadrée ; réécrit sur les rects réels du plateau IA : `.rowA` gauche = bord gauche intérieur du cadre IA + gap de grille, et carte IA `track0` = 167 px (symétrique du plateau humain) — confirme que le fix n'affecte pas `#board-ai`.
 - **Rien d'autre d'omis** : toutes les portes listées ci-dessus ont été exécutées avant et après, logs dans `test/results/v2.1.1/`.
 
 ### Manifeste
 
-`sha256-final-v21.txt` régénéré après les ajouts (docs + `js/i18n.js` + `test/g15-i18n.mjs`) : **48 entrées**, format `<sha256> * <path>`, recalculé par re-lecture (48/48 OK).
+`sha256-final-v21.txt` régénéré après les ajouts (docs + `js/i18n.js` + `test/g15-i18n.mjs`) : **48 entrées**, format `<n>|<sha256> *<path>`, recalculé par re-lecture (**48/48 OK**). Re-régénéré en phase D : mêmes 48 entrées, 5 hashs changés (`ANCRE-PARTS.md`, `COMPT-RENDU.md`, `css/base.css`, `README.md`, `test/g9-boards.mjs`) ; `test/g2g4-result.txt` inchangé (`33e6d93f…`). `css/base.css` : `2c6979ac3193ace0e94c7c5ccf2d5d71c0700310026efb44b78b7c6ef7c1a99b`.

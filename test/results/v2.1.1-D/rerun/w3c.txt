@@ -1,0 +1,4 @@
+  ok  0 id en double (27 ids au total)
+  ok  0 heading vide (6 headings au parse statique)
+  info W3C Nu API inaccessible (Unexpected token '<', "<!DOCTYPE "... is not valid JSON) — validation déclarée ; les vérifications statiques ci-dessus sont déterministes.
+w3c : 2 ok, 0 fail
