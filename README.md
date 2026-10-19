@@ -10,16 +10,17 @@ Le barème d'évaluation et la règle « **pas de quinte enroulée** » sont ré
 
 ## 1. Règles du jeu
 
-- Un jeu de 52 cartes ; **32 cartes sont distribuées** : 15 pour l'humain, 15 pour l'IA, **2 cartes de réserve** (le reste du talon est consommé).
+- Un jeu de **52 cartes (Texas Hold'em)** : 13 rangs (2→A) × 4 couleurs. **15 cartes sont tirées au hasard par partie** et distribuées en **deal miroir** : main_joueur == main_IA (la même sélection de 15 cartes pour les deux joueurs) ; les **37 cartes restantes ne sont pas utilisées** (jetées).
 - Chaque joueur possède **3 lignes de 5 cartes**. Le score d'un joueur = somme des scores de ses 3 lignes (barème ci-dessous).
-- Le match dure le temps choisi (10 s, 20 s, 30 s ou 60 s). À l'expiration, les scores finaux sont affichés et le vainqueur annoncé (ou égalité).
+- Le match dure le temps choisi (10 s, 20 s, 30 s, 60 s ou 90 s). À l'expiration, les scores finaux (bonus GO inclus) sont affichés et le vainqueur annoncé (ou égalité).
 - **Mécanique de swap** : pendant la partie, l'humain peut échanger **deux cartes de son propre plateau** (drag & drop d'une carte sur une autre case de son plateau).
   - Échange vers sa propre case → refus `self` (rien ne se passe).
   - Dépôt hors du plateau (ou dépôt invalide / `undefined`) → refus `out` / `invalid` (« annulé »).
   - Dépôt sur le plateau de l'IA → refus (plateau en lecture seule).
   - Partie non lancée ou terminée → refus (`not_running` / `over`).
   - Sinon : les deux cellules sont échangées, le compteur de swaps humains est incrémenté, le plateau est re-rendu.
-- **IA** : joue seule, à un intervalle dépendant de la difficulté (voir §3). L'IA ne peut pas être modifiée par l'humain.
+- **IA** : joue seule, à un intervalle dépendant de la difficulté (voir §3). L'IA ne peut pas être modifiée par l'humain. Elle **ne fait jamais de GO**.
+- **GO (v2.1)** : pendant les **5 dernières secondes**, le bouton **GO** est actif. Chaque clic donne **+1 point par seconde restante** ; le 2e clic dans la même seconde est **idempotent** (pas de double bonus). Bonus **plafonné à 16 points** (cap d'anti-abus recalibré sur le bench 900 parties — voir § v2.1.0). L'IA ne fait jamais de GO ; le bonus est ajouté au score final et affiché dans l'écran final.
 
 ### Barème (verbatim poker-rush)
 
@@ -39,20 +40,22 @@ Le barème d'évaluation et la règle « **pas de quinte enroulée** » sont ré
 
 ## 2. Interface
 
-- Sélecteurs : difficulté (`facile` / `normal` / `difficile`), temps de manche (10/20/30/60 s), bouton **Jouer**.
+- Sélecteurs : difficulté (`facile` / `normal` / `difficile`), temps de manche (10/20/30/60/90 s), bouton **Jouer**, bouton **GO** (actif pendant les 5 dernières secondes).
 - Chrono affiché en temps réel (rouge ≤ 5 s), scores des deux joueurs en direct, message d'état.
 - À la fin : écran final avec les 3 lignes décomposées par joueur, les sous-totaux, le total et l'annonce du vainqueur.
 
-## 3. Architecture (fichier unique `index.html`)
+## 3. Architecture (split v2.1 : shell `index.html` + `css/` + `js/`)
 
-Un seul fichier, sans dépendance, sans serveur — ouvrir dans un navigateur suffit.
+Shell HTML + 4 feuilles CSS + 5 modules JS, sans dépendance, sans serveur — ouvrir `index.html` dans un navigateur suffit.
 
-1. **`<script id="game-logic">`** (pur, sans DOM) — s'attache à `globalThis.G` :
-   - **Barème verbatim poker-rush** : `RANKS`, `RANK_LABEL`, `SUIT_LABEL`, `SUIT_NAME`, `HAND_SCORES`, `HAND_LABEL`, `isValidCard`, `evaluate5`, `isFull`, `rowScore`, `boardScore`, `boardBreakdown`.
-   - **Logique Poker Chrono** : `DIFFICULTIES`, `TIME_OPTIONS`, `AI_INTERVAL`, `PAIRS`, `createGame`, `start`, `tick`, `humanSwap`, `aiStep`, `humanRandomSwap`, `simulateGame`, `cardText`.
-   - **Déterminisme** : générateur pseudo-aléatoire seedé (mulberry32) — `createGame({ seed })` re-joue exactement la même partie (utilisé par les tests).
+1. **`js/deck.js`** (pur) — barème verbatim poker-rush (`RANKS`, `RANK_LABEL`, `SUIT_LABEL`, `SUIT_NAME`, `HAND_SCORES`, `HAND_LABEL`, `isValidCard`, `evaluate5`, `isFull`, `rowScore`, `boardScore`, `boardBreakdown`) + config (`DIFFICULTIES`, `TIME_OPTIONS`, `AI_INTERVAL`, `PAIRS`) + PRNG seedés (mulberry32, xoshiro128**).
+2. **`js/game.js`** (pur, sans DOM) — s'attache à `globalThis.G` :
+   - **Logique Poker Chrono** : `createGame`, `start`, `tick`, `humanSwap`, `aiStep`, `humanRandomSwap`, `simulateGame`, `cardText` + mécanique **GO** (activation 5 s, +1 pt/s restante, 2e clic idempotent, `GO_BONUS_CAP = 16`).
+   - **Déterminisme** : générateur pseudo-aléatoire seedé — `createGame({ seed })` re-joue exactement la même partie (utilisé par les tests).
    - **Simulation headless** : `simulateGame({ difficulty, time, seed })` déroule la partie tick par tick (100 ms) avec un humain aléatoire — aucun DOM requis, utilisable dans Node.
-2. **Script UI** (avec DOM) : rendu des plateaux, drag & drop natif (`dragstart`/`dragover`/`drop`/`dragend` + `DataTransfer`), chrono, écran final.
+3. **`js/ui.js`** (avec DOM) — rendu des plateaux, drag & drop natif (`dragstart`/`dragover`/`drop`/`dragend` + `DataTransfer`), chrono, écran final (score final avec bonus GO), bouton GO, toggles.
+4. **`js/audio.js`** (WebAudio) — musique de fond + 9 SFX, toggles/volumes persistés ; 1er clic sur un toggle = **armement** du son (fix réactivité v2.1).
+5. **`js/fx.js`** (canvas 2D) — particules poolées, lueurs, secousse d'écran.
 
 ### Niveaux d'IA
 
@@ -154,3 +157,34 @@ node test/run-headless.mjs poc-repro.mjs 9361    # rejoue les 5 PoC L34K : tous 
 ```
 
 **14/14 portes vertes** (logs `test/results/porte-1.log` … `porte-14.log` + `poc-repro.log`), single-file **119 687 o** (< 200 Ko), LF, zéro dépendance externe. Détails, commandes exactes et toutes les tentatives (échecs inclus) : `COMPT-RENDU.md` § v2.0.0.
+
+---
+
+## v2.1.0 — deck 52 cartes, deal miroir, GO recalibré (2026-10-19)
+
+- **Deck 52 cartes (Texas Hold'em)** : 13 rangs (2→A) × 4 couleurs ; **15 tirées au hasard par partie** (même mécanisme CSPRNG seedé, reproductible par seed), **deal miroir** (`main_joueur == main_IA`, même sélection de 15), **37 cartes non utilisées** (jetées). Vérifié : 52 cartes uniques, 15 tirées sans duplication, miroir, reproductibilité par seed (PORTE 1 / 3 + `max-board.mjs`).
+- **Option 90 s** ajoutée à `TIME_OPTIONS` (10/20/30/60/90 s).
+- **GO (nouveau)** : 1 point par seconde restante, activation 5 s, 2e clic idempotent, l'IA ne fait **jamais** de GO. **Cap d'anti-abus recalibré sur le bench 900 parties** : min=6, P1=52 → `min+85 = 91 > P1−30 = 22` → **cap = floor(P1 − min − 30) = 16** (`GO_BONUS_CAP = 16` dans `js/game.js`). Le bonus GO est ajouté au score final et **affiché dans l'écran final** (barème des mains inchangé).
+- **Max théorique d'un plateau (52 cartes)** : re-déduit = **1500** (quinte flush As haute = 500, puis meilleures mains restantes sur les 15 cartes miroir) — `test/max-board.mjs` (analyse + simulation) ; aucune constante 1500/1501 n'existait dans le code v2.0.0 (valeur dérivée).
+- **PORTE 2/4 (bench 900) corrigée** : l'IA difficile oscillait sur un cycle de 2 plies (swap A→B→A) et restait bloquée à 45 points sur la partie k=173. Causes : delta non borné à 0 dans l'évaluation 3-coups + re-évaluation de la paire en cours. Fix : `max(0, d)` + exclusion des exclusions croisées dans `eval3ply` → score 45→127 sur k=173, gradient strict restauré.
+- **W3C** : `id="fx"` retiré du `<script>` (doublon avec le `<canvas id="fx">`) ; `#final-title` non vide (titre de repli) ; **fix réactivité** : le 1er clic sur chaque toggle audio **arme** le son (force ON + AudioContext créé/repris dans le même tick), clics suivants = basculement normal (`js/audio.js` — drapeau `armed` par canal).
+- **Architecture** : split commité en phase 1 (shell `index.html` 2 755 o + `css/` × 4 + `js/` × 5 ; zéro changement comportemental, 14/14 portes vertes avant/après). **Version `2.1.0`** pinnée dans `js/game.js` et dans **toutes les portes** (12 pins mis à jour, g12/poc-repro l'étaient déjà).
+- **Hors périmètre** : P2/multijoueur.
+
+### Tests v2.1.0
+
+```bash
+node test/g1-scores.js                          # P1 barème 52 cartes (13 rangs, miroir) → 41 OK, 0 FAIL
+node test/g3-swap.js                            # P2 swap                                → 24 OK, 0 FAIL
+node test/g2g4-headless.js                      # P3 bench 900 + gradient IA           → 6 OK, 0 FAIL (exit 0)
+node test/max-board.mjs                         # max théorique plateau 52 cartes      → 8 OK, max=1500
+node test/go-logic.mjs                          # GO logique : cap 16, 5 s, idempotent, IA jamais GO → 18 OK
+node test/run-headless.mjs go-ui.mjs 9349       # GO UI : activation 5 s, bonus affiché → exit 0
+node test/run-headless.mjs go-ui-85.mjs 9350    # GO à t=85 s sur 90 s (toujours actif) → exit 0
+node test/w3c.mjs                               # W3C statique (ids, #final-title)      → 2 OK
+node test/run-headless.mjs reactivity.mjs 9348  # réactivité : 1 clic = 1 état + ctx running → 10 OK
+# portes 4-14 v2.0.0 inchangées en critères : g4-colors, g5-rownames, g5-ui, g6-audio, g7-fx,
+# g8-scan, g9-boards, g11-noscore, g12-seed, g13-best, g14-innertest, poc-repro → toutes vertes
+```
+
+Stats bench 900 (humains) : **min=6, P1=52, médiane=22, max=215** ; gradient IA strict 136.09 < 167.89 < 209.57 et 94.7 % < 99.3 % < 99.7 % (900 parties en ~112 s, 0 erreur JS). Log : `test/results/bench-900-final.log`. Détails, statistiques et toutes les tentatives (échecs inclus) : `COMPT-RENDU.md` § v2.1.0.

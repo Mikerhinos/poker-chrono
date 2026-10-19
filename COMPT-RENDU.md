@@ -242,3 +242,74 @@ Les 10 portes existantes repassent après les corrections (dont 5 v1 inchangées
 - Preuve complète de l'irreproductibilité 2^128 : théorique (xoshiro128** sur état 128 bits CSPRNG) ; preuve empirique : 100 001 seeds mulberry32 testés contre le deck réel → 0 correspondance, et le deck d'une partie réelle n'est plus produit par le chemin mulberry32 (flux xoshiro128** distinct).
 - La porte G12 compare les decks complets (30 cartes visibles + 2 restes) reconstruits in-page avec le même algorithme de deck que le fichier.
 - Audio headless : sortie non audible (déjà documenté v2) ; le périmètre de cette phase est logique/sécurité.
+
+---
+
+## v2.1.0 — 2026-10-19 (deck 52 cartes, deal miroir, GO, W3C, pins, rapport)
+
+**Tâche** : poker-chrono-20261018-PLAN-B-v2 (brief NI4NI). Cible `poker-chrono/`. Phase 1 (split) déjà commitée 2026-10-18 (`a4b0915` + `d627359`, 14/14 vertes avant et après).
+
+### Commits
+| Commit | Contenu |
+|---|---|
+| `a4b0915` + `d627359` | Phase 1 : split shell/css/js, 14/14 avant+après, stats 900 identiques |
+| `7cb64b5` | A : deck 52 miroir 2.1.0 (deck.js, game.js, g1, g3, g12) |
+| `7e22098` | B : GO cap 16 + fix PORTE 4 + item 3 max plateau 1500 + W3C shell |
+| `6455080` | C : bench 900 + W3C/réactivité audio + pins 2.1.0 + g6-audio v2.1 + socle v2.1 |
+| (commit D) | D : README § v2.1.0 + ce rapport + ANCRE-PARTS + manifeste sha256 |
+
+### Items
+1. **Deck 52** ✅ — 13 rangs (2→A) × 4 couleurs, mélange seedé CSPRNG (xoshiro128**), 15 tirées, **deal miroir** (main_joueur == main_IA), 37 jetées. P1 : 41 OK / 0 FAIL.
+2. **Extracteur** ✅ — rangs 2-6, wheel A-2-3-4-5, hautes avec basses, kickers couverts par P1 (41 checks) + P12 (seed) ; aucun bug trouvé (aucun correctif extracteur).
+3. **Max plateau** ✅ — re-déduit, aucune constante 1500/1501 préexistante (0 occurrence) : **1500**. Simulation `test/max-board.mjs` 8/8 (max plateau 1500, main miroir max 500).
+4. **Bench 900** ✅ — `node test/g2g4-headless.js` → exit 0 : **min=6, P1=52, médiane=22, max=215** (300 parties × 3 difficultés, déterministe, identique sur 2 exécutions). Gradient strict 136.09 < 167.89 < 209.57. Preuve : `test/results/bench-900-final.log`.
+5. **GO** ✅ — +1 pt/seconde restante, fenêtre 5 s, 2e clic idempotent, l'IA ne fait jamais GO. **Cap anti-abus : min+85 = 137 > P1−30 → on ne garde pas 85 ; cap = floor(P1−min−30) = floor(52−6−30) = 16** (`GO_BONUS_CAP = 16`, game.js). go-logic 18/18, go-ui + go-ui-85 exit 0.
+6. **W3C** ✅ — `id="fx"` retiré des `<script>` ; titre de repli `#final-title` non vide ; fix réactivité (brief v2.1) : `js/audio.js` — 1er clic par canal = **armement** (force ON + `ensure()` du AudioContext dans le même tick), clics suivants = basculement (`_musicArmed`/`_sfxArmed`). `test/reactivity.mjs` : 10/10.
+7. **Version 2.1.0** ✅ — 12/12 portes pinnées 2.1.0 + `js/game.js` + shell.
+8. **Docs** ✅ — README : « 52 cartes (Texas Hold'em), 15 tirées au hasard par partie, deal miroir, 37 non utilisées », GO cap 16, 90 s ; COMPT-RENDU appends (jamais réécrit).
+
+### PORTE 4 — cause racine et correctif
+- Symptôme : échec au k=173 (score IA 45), difficile 299/300, plateau bloqué.
+- Cause : cycle de swap de 2 plies — l'IA basculait entre les cartes tenues (0,6) et (6,0) ; la 2e ply évaluait le board avec `d` négatif (exclusion incomplète des cartes tenues).
+- Tentatives : fix v1 insuffisant (reverté) · fix v2 (`AI_INTERVAL`) → **régression 32 % → REVERT** · **fix final** : v3 `d = max(0, d)` + v4 `eval3ply(board, exI, exJ)` (exclusions croisées des deux cartes tenues). k=173 : 45→127, bench exit 0.
+
+### Commandes exactes (exécution 2026-10-19, Node v26.7.0, foreground)
+```
+node test/g1-scores.js                            # [PORTE 1] 41 OK, 0 FAIL
+node test/g3-swap.js                              # [PORTE 3] 24 OK, 0 FAIL
+node test/g2g4-headless.js                        # bench 900 → exit 0
+node test/go-logic.mjs                            # 18/18 OK
+node test/max-board.mjs                           # 8/8 OK
+node test/w3c.mjs                                 # 2/2 OK
+node test/g8-scan.mjs ; node test/g14-innertest.mjs
+node test/run-headless.mjs go-ui.mjs 9401 </dev/null       # exit 0
+node test/run-headless.mjs go-ui-85.mjs 9402 </dev/null    # exit 0
+node test/run-headless.mjs reactivity.mjs 9348 </dev/null  # 10 OK, 0 FAIL
+node test/run-headless.mjs g4-colors.mjs 9411 </dev/null   # 18 OK
+node test/run-headless.mjs g5-rownames.mjs 9411 </dev/null # 4 OK
+node test/run-headless.mjs g5-ui.mjs 9412 </dev/null       # 20 OK
+node test/run-headless.mjs g6-audio.mjs 9414 </dev/null    # 15 OK
+node test/run-headless.mjs g7-fx.mjs 9415 </dev/null       # 8 OK
+node test/run-headless.mjs g9-boards.mjs 9416 </dev/null   # 0 FAIL
+node test/run-headless.mjs g11-noscore.mjs 9417 </dev/null # 0 FAIL
+node test/run-headless.mjs g12-seed.mjs 9418 </dev/null    # 0 FAIL
+node test/run-headless.mjs g13-best.mjs 9419 </dev/null    # 0 FAIL
+node test/run-headless.mjs poc-repro.mjs 9420 </dev/null   # 0 FAIL
+```
+
+### Échecs, tentatives, pièges d'environnement (tous rapportés)
+- Bench background ×2 : runner du host = « stdin is not a tty » (node ne démarre pas ; la ligne d'erreur a contaminé `bench-900-final.log` puis `porte-2.log`). **Solution** : re-run foreground ≤ 600 s → exit 0. `porte-2.log` restauré par `git checkout` (preuve phase 1).
+- Batch headless 10 portes en background : tout mort sans output (même artefact) → re-run foreground chunké par 3.
+- Fix v2 PORTE 4 (AI_INTERVAL) : régression 32 % → reverté, aucune trace dans l'arbre final.
+- go-ui.mjs : `g2.total` → `g2.totalHuman` ; `process.exitCode` → `process.exit(fail ? 1 : 0)` (socket CDP ouvert → watchdog 240 s).
+- go-ui-85.mjs L47 : apostrophe dans un template literal.
+- reactivity.mjs : `state._ctx` → `state.ctx` ; logique de sortie (`fail` undefined avant le correctif).
+- g6-audio : 3 checks encodant la sémantique v2.0.0 (1er clic = OFF) → **réalignés sur v2.1** (1er clic = armement ON) : 13→15 checks, 15/15. Mise à jour de gate liée au fix réactivité (item 6), critères de split inchangés.
+- `test/probe-audio.mjs` supprimée (probe one-shot sans assertions) — même traitement que `diag-pos.mjs`, `trace-173.mjs`, `trace-173b.mjs`.
+- Node 26 : `__dirname` indisponible en .mjs → `import.meta.dirname` (w3c.mjs, diag-p4.mjs).
+
+### État final
+- Version **2.1.0** (shell + game.js + 12 portes).
+- Gates : 7 NODE + 10 HEADLESS + réactivité + GO UI ×2 → **tous exit 0** (2026-10-19).
+- sha256 baseline v2.0.0 mono : `3b3644e6…0e1a8` (119 687 o) ; état final v2.1 : manifeste `sha256-final-v21.txt` (46 fichiers hors `.git` et `test/results`).
+- Périmètre respecté : `poker-chrono/` uniquement ; P2/multijoueur non touché.
