@@ -317,3 +317,15 @@ node test/run-headless.mjs poc-repro.mjs 9420 </dev/null   # 0 FAIL
 ### Erratum (2026-10-19, après archivage 4RCH1V)
 - Section v2.1.0 § GO, ligne « Cap anti-abus » : « min+85 = 137 » → **min+85 = 91** (137 = P1+85, coquille arithmétique). Conclusion inchangée : 91 > P1−30 = 22 → cap = floor(P1−min−30) = **16** (`GO_BONUS_CAP = 16`), conforme au bench log `test/results/bench-900-final.log` et au README (L167, déjà correct).
 - Manifeste `sha256-final-v21.txt` régénéré : **46/46 OK** (avant : 44/46 — `ANCRE-PARTS.md` et `COMPT-RENDU.md` étaient stale, le manifeste ayant été généré avant les append finaux).
+
+### Erratum n°2 (2026-10-19) — wheel A-2-3-4-5 : incohérence documentation (REWORK-1)
+
+- **Constat** (NI4NI, vérification indépendante du livrable main @ 729b8a2) : `js/deck.js` L46-47 et `test/g1-scores.js` L23 comptent le wheel **A-2-3-4-5** comme QUINTE (75) / quinte_flush (500) — code, tests et bench déjà cohérents avec le wheel — tandis que le README.md L39 affirmait « l'as est uniquement haute — pas de quinte enroulée (A-2-3-4-5 et A-7-8-9-10 ne sont pas des quintes) ». Le livrable se contredisait lui-même (contradiction visible par le joueur).
+- **Décision NI4NI (appliquée telle quelle)** : on **garde le wheel** — Texas Hold'em standard (décision opérateur « Texas Hold'em complet ») ; la décision prime sur la ligne « pas de quinte enroulée » du barème v2.0. Le **barème de scores reste verbatim** (inchangé).
+- **Corrections doc-only** :
+  - README.md L6 : « verbatim » qualifié — scores du barème verbatim, règle d'as mise à jour pour le deck 52 (THe standard).
+  - README.md L39 : règle d'as alignée sur le code v2.1 — l'as est haute, et basse uniquement dans le wheel : A-2-3-4-5 est une quinte (5 haute, wheel standard THe) ; pas d'enroulement élevé (10-J-Q-K-A n'est pas une quinte) ; coquille « A-7-8-9-10 » corrigée.
+  - js/deck.js L43 : commentaire obsolète « entre 7 et A (pas d'enroulement) » aligné sur le code v2.1 (2→A, wheel basse autorisée, enroulement élevé exclu).
+- **Aucun changement code/tests/bench/cap** : stats min=6, P1=52, cap GO 16 inchangées.
+- **Re-run des portes (2026-10-19, doc-only, comportement inchangé)** : g1-scores 41 OK · g3-swap 24 OK · w3c 2 OK · go-logic 18 OK · g8-scan 23 OK · g14-innertest 0 FAIL · max-board 7 OK · bench 900 exit 0 (min=6, max=215, déterministe) — **0 FAIL au total**.
+- Manifeste `sha256-final-v21.txt` régénéré (mêmes 46 chemins, même format « N|hash *./path ») → vérifié **46/46 OK** par re-lecture.

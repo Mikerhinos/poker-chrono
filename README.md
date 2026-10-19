@@ -3,8 +3,9 @@
 Jeu de cartes **humain vs IA** en une page HTML (interface française), 3 plateaux de 5 cartes (3×5),
 joué en temps limité (chrono) avec une mécanique de **swap** de cartes par drag & drop.
 
-Le barème d'évaluation et la règle « **pas de quinte enroulée** » sont réutilisés **verbatim**
-(à l'octet près) depuis le projet `poker-rush` (voir `poker-rush/index.html`, bloc `<script id="game-logic">`).
+Le barème d'évaluation (scores des mains) est réutilisé **verbatim** (à l'octet près) depuis le projet
+`poker-rush` (voir `poker-rush/index.html`, bloc `<script id="game-logic">`). La **règle d'as** est mise
+à jour pour le deck 52 (Texas Hold'em standard) : voir §1 « Règle d'as » (wheel A-2-3-4-5 = quinte).
 
 ---
 
@@ -36,7 +37,7 @@ Le barème d'évaluation et la règle « **pas de quinte enroulée** » sont ré
 | Paire | `paire` | 10 |
 | Carte haute | `carte_haute` | 2 |
 
-**Règle d'as** : l'as est **uniquement haute** — **pas de quinte enroulée** (`A-2-3-4-5` et `A-7-8-9-10` ne sont pas des quintes).
+**Règle d'as** : l'as est haute, et basse uniquement dans le wheel — **A-2-3-4-5 est une quinte** (5 haute, wheel standard THe) ; **pas d'enroulement élevé** (10-J-Q-K-A n'est pas une quinte).
 
 ## 2. Interface
 

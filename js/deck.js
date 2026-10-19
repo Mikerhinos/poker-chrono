@@ -40,9 +40,9 @@
       flush = flush && c.s === cards[0].s;
     }
     const ranks = RANKS.filter((r) => count[r] > 0);
-    /* Quinte = 5 rangs distincts consécutifs entre 7 et A (pas d’enroulement). */
-    // v2.1 — quinte normale (5 rangs consécutifs) OU wheel A-2-3-4-5 (l'As n'est
-  // ici que BAS ; wheel élevé 10-J-Q-K-A toujours exclu).
+    /* Quinte = 5 rangs distincts consécutifs (rangs 2→A). */
+    // v2.1 — quinte normale (5 rangs consécutifs) OU wheel basse A-2-3-4-5 autorisée (l'As y est BAS) ;
+    // enroulement élevé exclu (10-J-Q-K-A n'est pas une quinte).
   const wheel = [2, 3, 4, 5, 14].every((r) => count[r] > 0);
   const straight = ranks.length === 5 && (ranks[ranks.length - 1] - ranks[0] === 4 || wheel);
     const counts = ranks.map((r) => count[r]).sort((a, b) => b - a);
