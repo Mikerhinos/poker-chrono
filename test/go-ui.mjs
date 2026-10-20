@@ -1,4 +1,4 @@
-// PORTE GO (UI, temps réel) — bouton « GO ! » piloté par CDP sur le vrai DOM.
+// PORTE GO (UI, temps réel) — bouton « Finish! » (clé i18n go_btn) piloté par CDP sur le vrai DOM.
 // Scénario : 90 s → GO désactivé à t<5 s → activé à t≈5 s → clic → bonus 16 (cap),
 // détail affiché (plateau + bonus), titre non vide, double-clic idempotent,
 // puis fin normale (10 s) → bonus 0.
