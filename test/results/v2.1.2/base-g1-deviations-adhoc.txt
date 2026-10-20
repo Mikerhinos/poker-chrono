@@ -1,0 +1,4 @@
+ok   RANKS v2.1 : 13 rangs 2→A
+ok   RANK_LABEL couvre 2-6
+ok   isValidCard v2.1 : r=2 OK, r=1/r=15 refusés
+g1-deviations-adhoc : 3 ok, 0 fail

@@ -1,0 +1,9 @@
+ok   source rowScore identique deck.js ↔ baseline-v2.0.0 (a=true, equal=true)
+ok   source boardScore identique deck.js ↔ baseline-v2.0.0 (a=true, equal=true)
+ok   source boardBreakdown identique deck.js ↔ baseline-v2.0.0 (a=true, equal=true)
+ok   source isFull identique deck.js ↔ baseline-v2.0.0 (a=true, equal=true)
+ok   const SUIT_LABEL identique deck.js ↔ baseline-v2.0.0 (a=true, equal=true)
+ok   const SUIT_NAME identique deck.js ↔ baseline-v2.0.0 (a=true, equal=true)
+ok   const HAND_SCORES identique deck.js ↔ baseline-v2.0.0 (a=true, equal=true)
+ok   const HAND_LABEL identique deck.js ↔ baseline-v2.0.0 (a=true, equal=true)
+verbatim-adhoc : 8 ok, 0 fail

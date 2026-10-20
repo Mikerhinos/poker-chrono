@@ -1,0 +1,104 @@
+
+C:\Users\Mikerhinos\Poker-Chrono\js\audio.js
+   19:12  error  'err' is defined but never used  no-unused-vars
+   22:56  error  'err' is defined but never used  no-unused-vars
+   66:14  error  'err' is defined but never used  no-unused-vars
+   81:14  error  'err' is defined but never used  no-unused-vars
+  109:14  error  'err' is defined but never used  no-unused-vars
+  135:14  error  'err' is defined but never used  no-unused-vars
+  153:14  error  'err' is defined but never used  no-unused-vars
+  175:14  error  'err' is defined but never used  no-unused-vars
+  263:30  error  'err' is defined but never used  no-unused-vars
+  270:3   error  'G' is not defined               no-undef
+
+C:\Users\Mikerhinos\Poker-Chrono\js\deck.js
+   11:9   error  'RANK_LABEL' is assigned a value but never used    no-unused-vars
+   12:9   error  'SUIT_LABEL' is assigned a value but never used    no-unused-vars
+   13:9   error  'SUIT_NAME' is assigned a value but never used     no-unused-vars
+   23:9   error  'DIFFICULTIES' is assigned a value but never used  no-unused-vars
+   68:12  error  'boardScore' is defined but never used             no-unused-vars
+   70:12  error  'boardBreakdown' is defined but never used         no-unused-vars
+   80:9   error  'TIME_OPTIONS' is assigned a value but never used  no-unused-vars
+   81:9   error  'AI_INTERVAL' is assigned a value but never used   no-unused-vars
+   87:12  error  'rowIdx' is defined but never used                 no-unused-vars
+   88:12  error  'colIdx' is defined but never used                 no-unused-vars
+   90:12  error  'mulberry32' is defined but never used             no-unused-vars
+  102:12  error  'xoshiro128ss' is defined but never used           no-unused-vars
+  121:12  error  'deriveStream' is defined but never used           no-unused-vars
+
+C:\Users\Mikerhinos\Poker-Chrono\js\fx.js
+  139:3  error  'G' is not defined  no-undef
+
+C:\Users\Mikerhinos\Poker-Chrono\js\game.js
+    3:16  error  'rowIdx' is not defined                   no-undef
+    3:32  error  'colIdx' is not defined                   no-undef
+    3:48  error  'rowIdx' is not defined                   no-undef
+    3:64  error  'colIdx' is not defined                   no-undef
+   12:16  error  'rowIdx' is not defined                   no-undef
+   12:32  error  'rowIdx' is not defined                   no-undef
+   16:21  error  'rowScore' is not defined                 no-undef
+   22:20  error  'rowScore' is not defined                 no-undef
+   22:50  error  'rowScore' is not defined                 no-undef
+   28:13  error  'rowScore' is not defined                 no-undef
+   28:33  error  'rowScore' is not defined                 no-undef
+   28:53  error  'rowScore' is not defined                 no-undef
+   33:26  error  'PAIRS' is not defined                    no-undef
+   44:26  error  'PAIRS' is not defined                    no-undef
+   59:26  error  'PAIRS' is not defined                    no-undef
+   70:28  error  'PAIRS' is not defined                    no-undef
+   84:51  error  'bd1' is assigned a value but never used  no-unused-vars
+   93:26  error  'PAIRS' is not defined                    no-undef
+  109:24  error  'DIFFICULTIES' is not defined             no-undef
+  110:18  error  'TIME_OPTIONS' is not defined             no-undef
+  116:20  error  'mulberry32' is not defined               no-undef
+  117:18  error  'mulberry32' is not defined               no-undef
+  118:15  error  'mulberry32' is not defined               no-undef
+  132:16  error  'err' is defined but never used           no-unused-vars
+  134:20  error  'xoshiro128ss' is not defined             no-undef
+  134:33  error  'deriveStream' is not defined             no-undef
+  135:18  error  'xoshiro128ss' is not defined             no-undef
+  135:31  error  'deriveStream' is not defined             no-undef
+  136:15  error  'xoshiro128ss' is not defined             no-undef
+  136:28  error  'deriveStream' is not defined             no-undef
+  140:51  error  'RANKS' is not defined                    no-undef
+  182:19  error  'boardScore' is not defined               no-undef
+  183:16  error  'boardScore' is not defined               no-undef
+  193:18  error  'boardBreakdown' is not defined           no-undef
+  194:15  error  'boardBreakdown' is not defined           no-undef
+  205:22  error  'AI_INTERVAL' is not defined              no-undef
+  262:19  error  'PAIRS' is not defined                    no-undef
+  262:52  error  'PAIRS' is not defined                    no-undef
+  267:30  error  'PAIRS' is not defined                    no-undef
+  290:15  error  'PAIRS' is not defined                    no-undef
+  290:51  error  'PAIRS' is not defined                    no-undef
+  315:12  error  'RANK_LABEL' is not defined               no-undef
+  315:33  error  'SUIT_LABEL' is not defined               no-undef
+  321:5   error  'RANKS' is not defined                    no-undef
+  321:12  error  'RANK_LABEL' is not defined               no-undef
+  321:24  error  'SUIT_LABEL' is not defined               no-undef
+  321:36  error  'SUIT_NAME' is not defined                no-undef
+  321:47  error  'HAND_SCORES' is not defined              no-undef
+  321:60  error  'HAND_LABEL' is not defined               no-undef
+  322:5   error  'isValidCard' is not defined              no-undef
+  322:18  error  'evaluate5' is not defined                no-undef
+  322:29  error  'isFull' is not defined                   no-undef
+  322:37  error  'rowScore' is not defined                 no-undef
+  322:47  error  'boardScore' is not defined               no-undef
+  322:59  error  'boardBreakdown' is not defined           no-undef
+  324:5   error  'DIFFICULTIES' is not defined             no-undef
+  324:19  error  'TIME_OPTIONS' is not defined             no-undef
+  324:33  error  'AI_INTERVAL' is not defined              no-undef
+  324:46  error  'PAIRS' is not defined                    no-undef
+
+C:\Users\Mikerhinos\Poker-Chrono\js\i18n.js
+  371:66  error  'err' is defined but never used  no-unused-vars
+  378:71  error  'err' is defined but never used  no-unused-vars
+
+C:\Users\Mikerhinos\Poker-Chrono\js\ui.js
+   23:14  error  'err' is defined but never used  no-unused-vars
+   26:60  error  'err' is defined but never used  no-unused-vars
+  170:68  error  'err' is defined but never used  no-unused-vars
+  358:14  error  'err' is defined but never used  no-unused-vars
+
+✖ 89 problems (89 errors, 0 warnings)
+
