@@ -424,4 +424,116 @@ node test/run-headless.mjs poc-repro.mjs 9420 </dev/null   # 0 FAIL
 
 ### Manifeste
 
-`sha256-final-v21.txt` régénéré après les ajouts (docs + `js/i18n.js` + `test/g15-i18n.mjs`) : **48 entrées**, format `<n>|<sha256> *<path>`, recalculé par re-lecture (**48/48 OK**). Re-régénéré en phase D : mêmes 48 entrées, 5 hashs changés (`ANCRE-PARTS.md`, `COMPT-RENDU.md`, `css/base.css`, `README.md`, `test/g9-boards.mjs`) ; `test/g2g4-result.txt` inchangé (`33e6d93f…`). `css/base.css` : `2c6979ac3193ace0e94c7c5ccf2d5d71c0700310026efb44b78b7c6ef7c1a99b`.
+`sha256-final-v21.txt` régénéré après les ajouts (docs + `js/i18n.js` + `test/g15-i18n.mjs`) : **48 entrées**, format `<n>|<sha256> *<path>`, recalculé par re-lecture (**48/48 OK**). Re-régénéré en phase D : mêmes 48 entrées, 5 hashs changés (`ANCRE-PARTS.md`, `COMPT-RENDU.md`, `css/base.css`, `README.md`, `test/g9-boards.mjs`) ; `test/g2g4-result.txt` inchangé (`33e6d93f…`). `css/base.css` : `2c6979ac3193ace0e947c5ccf2d5d71c0700310026efb44b78b7c6ef7c1a99b`.
+
+## v2.1.2 — Pointer Events, Finish!, pulse-glow, musique OFF, ESLint porte 23 + code mort `bd1` (2026-10-20)
+
+**Base** : `1c65214` (HEAD v2.1.1 phase D, tree clean). **Commits** : 6 commits atomiques conventionnels empilés sur `1c65214` :
+
+| Commit | Contenu |
+|---|---|
+| `7059b88` | Item 1 — pulse-glow du bouton de départ `#start` |
+| `3595642` | Item 2 — « Finish! » dans les 5 langues |
+| `1514dcb` | Item 3 — drag-and-drop DragEvents → Pointer Events |
+| `455a4e6` | Item 6 — musique coupée par défaut au chargement frais |
+| `351c159` | fix — retrait du code mort `bd1` dans `eval3ply` (ESLint porte 23) |
+| `98aa7f3` | test — re-execution intégrale 22 portes + w3c + ESLint #23 (preuves) |
+
+**Hors périmètre** : `PLAN-MULTIJOUEUR-2JOUERS.md` (plan multiplayer v2.2, non tracké, non livrable).
+
+### Items du brief (NI4NI)
+
+1. **PULSE-GLOW** (`7059b88`) — keyframe `start-pulse-glow` dans `css/anim.css` (fusion timer-pulse + glow-fade) sur le bouton `#start` : CSS seul, zéro JS, zéro DOM, `prefers-reduced-motion` respecté. Variante écartée : deux animations indépendantes (double compositing dur à caler). Vérif : go-logic 18/18, g8 24/0, go-ui 11/0.
+2. **« Finish! » dans les 5 langues** (`3595642`) — `go_btn` dans les 5 dictionnaires `js/i18n.js` : EN `Finish!`, FR `Finis !`, ES `¡Fin!`, IT `Fine!`, DE `Fertig!` ; id du bouton `go` inchangé, zéro hardcode (grep : aucune occurrence résiduelle). 7 patches (5 dictionnaires + commentaire `test/go-ui.mjs` + label). Vérif : 5/5 langues, g15-i18n 20/0, w3c 3/0, go-ui 11/0.
+3. **DragEvents → Pointer Events** (`1514dcb`) — `js/ui.js` réécrite en Pointer Events natifs (pas de HTML5 DnD) : `DRAG_THRESHOLD_PX = 4`, drop via `elementFromPoint` (`cellAtPoint`), garde `pointerType==='mouse' && button===0` dans `onCardPointerDown` ; CSS `touch-action:none` + `.card.dragging` (`css/base.css`). Tests `test/g5-ui.mjs` et `test/g5-rownames.mjs` mis à jour (PointerEvents + `target.scrollIntoView()` avant `getBoundingClientRect()` — la cellule IA était hors viewport headless 758×482, cy=666). Vérif : g5-rownames 4/4, g5-run 20/20, g8 PASS, w3c 0 erreur, go-ui 11/0.
+4. **Musique OFF par défaut** (`455a4e6`) — `js/audio.js` : `musicOn = lsGet(KEY.music, '0') === '1'` (avant : ON par défaut), `index.html` `aria-pressed="false"` ; SFX inchangés ; `syncAudioUI()` synchronise l'UI au chargement. `test/g6-audio.mjs` étendu (16 checks dont « musique OFF par défaut » + aria-pressed). Vérif : g6 16/16, reactivity 10/10, g8 24/24.
+
+### ESLint — porte 23 (outillage dev-only)
+
+- La porte 23 n'était matérialisée nulle part dans le repo (pas de config, pas de lock) → installation **scratch** `eslint@9.39.2` + `@eslint/js@9.39.2` (86 packages) : **zéro dépendance runtime, zéro modification du repo** (config et concaténation conservées en scratch ; copie de la config livrée en preuve dans `test/results/v2.1.2/eslint.concat.config.mjs`).
+- Approche : **concaténation** des 6 `js/*.js` dans l'ordre de chargement `index.html` (deck → game → i18n → audio → fx → ui) vers `all.js` (~67,5 Ko) — l'analyse fichier par fichier de 6 classic scripts partageant le scope global produit 89 faux positifs (définitions globales lues entre scripts).
+- Flat config : `sourceType:'script'`, `ecmaVersion:2024`, globals navigateur + `G:'writable'` (objet global partagé) + `crypto:'readonly'` (vrai global navigateur utilisé dans `js/fx.js`) + `no-unused-vars:{caughtErrors:'none'}`.
+- Résultat final : **exit 0, 0 erreur**. Preuve : `test/results/v2.1.2/eslint-gate23-concat.txt`.
+
+### Code mort `bd1` dans `eval3ply` (`js/game.js`) — `351c159`
+
+- ESLint a signalé `bd1` : déclarée (L78) et assignée (L88) mais **jamais lue** — hors de l'ensemble verbatim g1-adhoc (`rowScore`, `boardScore`, `boardBreakdown`, `isFull` + 4 constantes) → suppression des 2 lignes.
+- Non-impact prouvé : bench 900 post-`bd1` **byte-for-byte identique** au pré-fix (difflib : 0 diff), g1-adhoc 41/41, go-logic 18/18, g9 60 plateaux 0 FAIL, max-board 7/7, g8-scan vert.
+
+### Portes — re-execution intégrale (2026-10-20, host Windows, Node v26.7.0, foreground)
+
+| Porte | Résultat |
+|---|---|
+| `g1-scores.js` (officielle) | FAIL — `poker-rush/index.html` absent (ENOENT) ; porte ad hoc `g1-adhoc.mjs` en lieu et place : **41 OK / 0 FAIL** |
+| `g1-deviations-adhoc` | 3 OK / 0 FAIL |
+| `verbatim-adhoc` | 8 OK / 0 FAIL (`deck.js` ↔ `baseline-v2.0.0/index.html` byte-identiques) |
+| `g3-swap.js` | 24 OK / 0 FAIL |
+| `g2g4-headless.js` (bench 900) | exit 0, 0 erreur JS — hash normalisé `312841cd…` inchangé (×2 runs) |
+| `max-board.mjs` | 7 OK / 0 FAIL (20 000 deals, max=504 ≤ 1500) |
+| `go-logic.mjs` | 18 OK / 0 FAIL |
+| `w3c.mjs` | 3 OK / 0 FAIL (0 erreur Nu) |
+| `g8-scan.mjs` | 24 OK / 0 FAIL — 144 348 octets, 6 JS / 2 polices embarquées |
+| `g14-innertest.mjs` | RESULT OK (FAILURES: 0) |
+| `g4-colors.mjs` | 18 OK / 0 FAIL |
+| `g5-rownames.mjs` | 4 OK / 0 FAIL (24 vérif en jeu, 0 écart sur 24 itérations) |
+| `g5-run.mjs` | 20 OK / 0 FAIL (3 parties + refus lecture seule) |
+| `g6-audio.mjs` | 16 OK / 0 FAIL |
+| `g7-fx.mjs` | 8 OK / 0 FAIL (60 fps mesurés) |
+| `g9-boards.mjs` | 60 plateaux, FAILURES: 0, RESULT OK (D1–D8) |
+| `g11-noscore.mjs` | RESULT OK (FAILURES: 0) |
+| `g12-seed.mjs` | RESULT OK (FAILURES: 0) |
+| `g13-best.mjs` | RESULT OK (FAILURES: 0) |
+| `g15-i18n.mjs` | 20 OK / 0 FAIL |
+| `go-ui.mjs` | 11 OK / 0 FAIL |
+| `go-ui-85.mjs` | 6 OK / 0 FAIL |
+| `reactivity.mjs` | 10 OK / 0 FAIL |
+| `poc-repro.mjs` | POCS NON REPRODUCTIBLES (5 vectors) — attendu |
+| ESLint #23 | exit 0, 0 erreur (post `bd1` + global `crypto`) |
+
+**Synthèse : 22/22 portes vertes + w3c 3/3 + ESLint 0 erreur.** `g1-scores` officielle = échec connu et documenté (`poker-rush/index.html` absent, état hérité de v2.1) ; la porte ad hoc correspondante passe 41/41.
+
+### Bench 900
+
+- 2× `node test/g2g4-headless.js` (avant et après `bd1`), exit 0, 0 erreur JS.
+- Hash normalisé = `312841cd81911460d998d4b4d6a026cfab11b4c7efca4559a8443bc828bc357a` — **identique à la référence v2.1.1**.
+- **Procédure exacte confirmée** (reproduite sur 4 fichiers : v2.1.1 avant/après, v2.1.2 avant/après `bd1`) : retirer la ligne `total : 900 parties en X s`, remplacer la valeur du champ JSON `"wall"` par `111.5`, rejoiner par `\n` + `\n` final, SHA-256 UTF-8.
+- La sortie post-`bd1` est byte-identique à la sortie pré-fix — la suppression est prouvée sans effet.
+- Preuves : `test/results/v2.1.2/bench900-run-v212.txt`, `bench900-run-v212b.txt`, `bench900-normalized.sha256`.
+
+### Fichiers modifiés / créés
+
+Modifiés : `index.html` (pulse-glow, `aria-pressed="false"`), `css/anim.css` (keyframe `start-pulse-glow`), `css/base.css` (`touch-action:none`, `.card.dragging`), `js/ui.js` (Pointer Events, `DRAG_THRESHOLD_PX = 4`, `cellAtPoint`), `js/i18n.js` (5× `go_btn` = Finish! / Finis ! / ¡Fin! / Fine! / Fertig!), `js/audio.js` (`musicOn` OFF par défaut), `js/game.js` (suppression `bd1`), `test/g5-ui.mjs`, `test/g5-rownames.mjs` (PointerEvents + `scrollIntoView()`), `test/go-ui.mjs` (commentaire), `test/g6-audio.mjs` (16 checks), `COMPT-RENDU.md` (section présente).
+
+Créés : `test/results/v2.1.2/` (logs intégraux de la re-run, bench 900, preuves ESLint, `g1-adhoc.mjs`, `probe-ai-cell.mjs`), `baseline-v2.0.0/index.html` (archive de référence de la porte g1-adhoc), `sha256-final-v212.txt` (manifeste 48 entrées), `MANIFESTE.md` (version lisible du manifeste).
+
+### Tentatives (échecs / inconclusifs, avec cause)
+
+- **`g1-scores` officielle** : ENOENT `poker-rush/index.html` — le dossier n'existe pas sur l'hôte (état hérité de v2.1) → porte ad hoc `g1-adhoc.mjs` (41 checks) en lieu et place.
+- **Wave 2, batch 1 : 6/7 exit=1** — passage `test/g5-rownames.mjs` à `run-headless.mjs` qui préfixe `test/` lui-même → double préfixe `test/test/`. Fix : passer le nom de fichier seul. Re-run : 12/12 vertes.
+- **ESLint scratch, résolution `@eslint/js`** : non résolu depuis le scratch → chemin `file:///` absolu dans la config ; tentative de config à la racine du repo (échec résolution) → config maintenue en scratch, `files: ['all.js']`.
+- **ESLint multi-script** : 89 erreurs fichier par fichier (faux positifs, scope global partagé des 6 classic scripts) → concaténation dans l'ordre de chargement `index.html`.
+- **ESLint `crypto` no-undef** : faux positif — vrai global navigateur (`fx.js`) → ajouté aux globals de la config, aucun changement de code.
+- **ESLint `bd1` no-unused-vars** : code mort réelle (déclarée + assignée, jamais lue, hors ensemble verbatim) → suppression ; bench 900 byte-identique en preuve de non-impact.
+- **`g5-run` 1 FAIL au 1er run** : cellule IA hors viewport headless (cy=666 > 482) → probe `test/results/v2.1.2/probe-ai-cell.mjs` (5 corrections : chemin `cdp.mjs` `../../cdp.mjs`, chemin `index.html` `../../../index.html`, diagnostic `location.href`/`readyState`, `scrollIntoView`) → fix `scrollIntoView()` avant `getBoundingClientRect()` dans `test/g5-ui.mjs` + `test/g5-rownames.mjs` → 20/20.
+- **Normalisation bench 900** : variante A sans trailing newline → hash différent ; variante B (suppression de la ligne `wall` entière) → incorrect. Procédure retenue et validée sur 4 fichiers : variante A + `\n` final.
+- **`stdin is not a tty` (host Windows/MSYS)** : sur les runs Node foreground (max-board, g9 post-`bd1`) → contournement `< /dev/null` + chemins natifs Windows pour les redirections (le scratch MSYS est instable entre bash et le kernel Python).
+- **Rien d'autre d'omis** : les 22 portes + w3c + ESLint ont toutes été exécutées, logs dans `test/results/v2.1.2/`.
+
+### Manifeste
+
+`sha256-final-v212.txt` — **mêmes 48 entrées que le manifeste v2.1** (périmètre identique), hashs recalculés par re-lecture à l'état final (commit `98aa7f3`) : **12 hashs changés** sur 48 :
+
+1. `./css/anim.css` — `f8beff71bf0e2936f2f87f34444ee481b9d4f0f19a79bfe576f157e2f50d569a`
+2. `./css/base.css` — `a8bab1e7bafc84d76ff8cd3548d17795305ca0d21d476990ce0ae94e0204d9b3`
+3. `./index.html` — `b86304fc8a125b4cfdb88f752f2159e157a96358e7c467bd5f34c259f88ab399`
+4. `./js/audio.js` — `f72fba8752200a8bdf5604bbb1627422fbc5c319f5024559d7e8c2f5af3d1061`
+5. `./js/i18n.js` — `aaf094d7d5bce100199e23fc38fa3f89debb85e0073cc41fefac15efdf0637ea`
+6. `./js/game.js` — `621aac59dddcc9d6987804adf0f4a49b48c522b6c705805959e0c2f9ce81c7de`
+7. `./js/ui.js` — `6df9c9f3b966a1445fb47d3663b1e8b8c4637e1f3dd67bf8f7b4dd8164a1982e`
+8. `./test/g5-rownames.mjs` — `e2b6c1eae5c90742eea36bee81ef3f1531e60a679606e54e1f4491f72c9b5114`
+9. `./test/g5-ui.mjs` — `c588bcb614fa3627f7595868c389017c1dc0999c87e0029a23d6ba9ee4202bdd`
+10. `./test/g6-audio.mjs` — `3aec414c17e9ce5c628005ebe45419eae6e5c3eb47c15099d205deebc869c960`
+11. `./test/go-ui.mjs` — `d964383c651dfe90177b5d341b5a0aae507b671cfb71f78943fd0399a30fdc9f` (commentaire item 2)
+12. `./COMPT-RENDU.md` — section v2.1.2 présente
+
+Version lisible : `MANIFESTE.md` (nouveau).
