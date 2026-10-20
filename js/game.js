@@ -62,7 +62,7 @@ function swapCells(board, i, j) {
     }
     cands.sort((a, b) => b.d1 - a.d1); // stable → déterministe sur égalité
     const beam = cands.slice(0, 10);
-    let bi = -1, bj = -1, bv = -Infinity, bd1 = -Infinity;
+    let bi = -1, bj = -1, bv = -Infinity;
     for (const c of beam) {
       swapCells(board, c.i, c.j);
       const rs2 = rowScoresOf(board);
@@ -81,7 +81,7 @@ function swapCells(board, i, j) {
         // de coup) — la valeur d'une plie continue est max(0, meilleur
         // delta), pas la somme forcée de coups négatifs.
         const v = c.d1 + Math.max(0, c2.d) + Math.max(0, d3);
-        if (v > bv) { bv = v; bi = c.i; bj = c.j; bd1 = c.d1; }
+        if (v > bv) { bv = v; bi = c.i; bj = c.j; }
       }
       swapCells(board, c.i, c.j);
     }
