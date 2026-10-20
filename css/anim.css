@@ -28,3 +28,11 @@
     50% { transform: translate(-3px, 1px); }
   }
   main.shake { animation: screen-shake .6s linear; }
+  /* v2.1.2 : pulsation du bouton de départ — fusion des patterns existants
+     timer-pulse (échelle 1↔1.07) et glow-fade (lueur verte --good).
+     Classe retirée au démarrage de la partie (js/ui.js), ré-armée à la fin. */
+  @keyframes start-pulse-glow {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 rgba(62,207,142,0); border-color: var(--line); }
+    50% { transform: scale(1.07); box-shadow: 0 0 16px rgba(62,207,142,.85); border-color: var(--good); }
+  }
+  #start.pulse-glow { animation: start-pulse-glow 1.6s ease-in-out infinite; }

@@ -253,6 +253,9 @@
     lastWholeSec = Math.ceil(state.timeLeft / 1000);
     sirenPlayed = false;
     $('#final').hidden = true;
+    /* v2.1.2 : la pulsation du bouton de départ s'arrête au démarrage (classe
+     * retirée — aucun changement de logique de jeu). */
+    $('#start').classList.remove('pulse-glow');
     msg('');
     status(G.I18N.t('running', { time, diff: G.I18N.diffLabel(difficulty) }));
     renderAll({ animateAll: true });
@@ -361,6 +364,9 @@
       if (r.winner === 'human') G.FX.winBurst();
       else if (r.winner === 'ai') G.FX.loseBurst();
     }
+    /* v2.1.2 : la pulsation du bouton de départ est ré-armée — une nouvelle
+     * partie est à nouveau possible depuis le bouton #start. */
+    $('#start').classList.add('pulse-glow');
   }
 
   /* ---------- init ---------- */
