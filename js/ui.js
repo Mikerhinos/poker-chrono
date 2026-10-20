@@ -6,7 +6,7 @@
 
   let state = null;
   let uiTimer = null;
-  let dragging = false;
+  let pointerDrag = null; // { from, pointerId, x0, y0, moved }
   let lastAiMoveSeen = -1;
   let lastWholeSec = null;
   let sirenPlayed = false;
@@ -62,9 +62,7 @@
     suit.textContent = G.SUIT_LABEL[card.s];
     d.append(rank, suit);
     if (boardName === 'human') {
-      d.draggable = true;
-      d.addEventListener('dragstart', onDragStart);
-      d.addEventListener('dragend', onDragEnd);
+      d.addEventListener('pointerdown', onCardPointerDown);
     }
     return d;
   }
@@ -94,13 +92,8 @@
           card.style.animationDelay = (idx * 25) + 'ms';
         }
         cell.appendChild(card);
-        if (name === 'human') {
-          cell.addEventListener('dragover', onCellDragOver);
-          cell.addEventListener('dragleave', onCellDragLeave);
-          cell.addEventListener('drop', onHumanCellDrop);
-        } else {
-          cell.addEventListener('drop', onAiCellDrop);
-        }
+        /* v2.1.2 : Pointer Events — survol et dépôt gérés au niveau
+         * document (document.elementFromPoint), plus d'écouteurs par case. */
         rowEl.appendChild(cell);
       }
       /* v2 : lueur sur la ligne dont le score vient de se renforcer. */
@@ -146,41 +139,65 @@
     }
   }
 
-  /* ---------- glisser-déposer (humain uniquement) ---------- */
+  /* ---------- glisser-déposer (humain uniquement) — v2.1.2 : Pointer Events ----------
+   * L'API HTML5 DragEvents est inopérante en tactile : passage aux Pointer
+   * Events (souris + tactile). Survol par document.elementFromPoint, dépôt
+   * au pointerup. Seuil de 4 px : un simple clic sur une carte ne déclenche
+   * ni swap ni message (équivalent du comportement DragEvents). */
+  const DRAG_THRESHOLD_PX = 4;
 
-  function onDragStart(e) {
+  function cellAtPoint(x, y) {
+    const el = document.elementFromPoint(x, y);
+    return el && el.closest ? el.closest('.cell') : null;
+  }
+
+  function clearPointerDrag() {
+    document.querySelectorAll('.cell.drag-over').forEach((c) => c.classList.remove('drag-over'));
+    document.querySelectorAll('.card.dragging').forEach((c) => c.classList.remove('dragging'));
+    pointerDrag = null;
+  }
+
+  function onCardPointerDown(e) {
+    if (e.pointerType === 'mouse' && e.button !== 0) return; // clic droit / molette
+    if (pointerDrag) return; // un seul drag à la fois
     if (!state || !state.running || state.over) {
-      e.preventDefault();
       msg(state && state.over ? G.I18N.t(REASONS.over) : G.I18N.t('start_first'));
       return;
     }
-    const from = e.currentTarget.dataset.idx;
-    e.dataTransfer.setData('text/plain', from);
-    e.dataTransfer.effectAllowed = 'move';
-    dragging = true;
+    const from = parseInt(e.currentTarget.dataset.idx, 10);
+    if (Number.isNaN(from)) return;
+    pointerDrag = { from, pointerId: e.pointerId, x0: e.clientX, y0: e.clientY, moved: false };
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) { /* événement synthétique : capture indisponible */ }
+    e.currentTarget.classList.add('dragging');
+    e.preventDefault();
   }
 
-  function onDragEnd() { dragging = false; }
-
-  function onCellDragOver(e) {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    e.currentTarget.classList.add('drag-over');
+  function onPointerMove(e) {
+    if (!pointerDrag || e.pointerId !== pointerDrag.pointerId) return;
+    if (!pointerDrag.moved &&
+        Math.hypot(e.clientX - pointerDrag.x0, e.clientY - pointerDrag.y0) >= DRAG_THRESHOLD_PX) {
+      pointerDrag.moved = true;
+    }
+    const cell = cellAtPoint(e.clientX, e.clientY);
+    document.querySelectorAll('.cell.drag-over').forEach((c) => {
+      if (c !== cell) c.classList.remove('drag-over');
+    });
+    if (cell && cell.closest('#board-human')) cell.classList.add('drag-over');
   }
 
-  function onCellDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
-
-  function onHumanCellDrop(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    e.currentTarget.classList.remove('drag-over');
-    dragging = false;
+  function onPointerUp(e) {
+    if (!pointerDrag || e.pointerId !== pointerDrag.pointerId) return;
+    const from = pointerDrag.from;
+    const moved = pointerDrag.moved;
+    const cell = cellAtPoint(e.clientX, e.clientY);
+    clearPointerDrag();
+    if (!moved) return; // simple clic sur une carte : aucun dépôt
+    if (!cell) { msg(G.I18N.t(REASONS.out)); return; }
+    if (!cell.closest('#board-human')) { msg(G.I18N.t('ai_readonly')); return; }
+    const to = parseInt(cell.dataset.idx, 10);
+    if (Number.isNaN(to)) return;
     if (!state) return;
     if (state.over || !state.running) { msg(G.I18N.t(state.over ? REASONS.over : REASONS.not_running)); return; }
-    const fromRaw = e.dataTransfer.getData('text/plain');
-    const from = parseInt(fromRaw, 10);
-    if (fromRaw === '' || Number.isNaN(from)) { msg(G.I18N.t(REASONS.invalid)); return; }
-    const to = parseInt(e.currentTarget.dataset.idx, 10);
     const prevScores = [
       G.rowScore(state.boards.human[0]),
       G.rowScore(state.boards.human[1]),
@@ -198,19 +215,10 @@
     }
   }
 
-  function onAiCellDrop(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    dragging = false;
-    msg(G.I18N.t('ai_readonly'));
-  }
-
-  function onDocumentDrop(e) {
-    if (!dragging) return;
-    if (e.target && e.target.closest && e.target.closest('#board-human .cell')) return; // géré par la case
-    e.preventDefault();
-    dragging = false;
-    msg(G.I18N.t(REASONS.out));
+  function onPointerCancel(e) {
+    if (!pointerDrag || e.pointerId !== pointerDrag.pointerId) return;
+    clearPointerDrag(); // annulation (touche Esc / interruption) : pas de message,
+    // parité avec l'ancien dragend silencieux.
   }
 
   /* ---------- GO ! (v2.1, item 5 du brief) ----------
@@ -371,8 +379,10 @@
 
   /* ---------- init ---------- */
 
-  document.addEventListener('drop', onDocumentDrop);
-  document.addEventListener('dragover', (e) => e.preventDefault());
+  /* v2.1.2 : Pointer Events — écouteurs document (souris + tactile). */
+  document.addEventListener('pointermove', onPointerMove);
+  document.addEventListener('pointerup', onPointerUp);
+  document.addEventListener('pointercancel', onPointerCancel);
   $('#start').addEventListener('click', startGame);
   $('#go').addEventListener('click', onGoClick);
   $('#replay').addEventListener('click', startGame);

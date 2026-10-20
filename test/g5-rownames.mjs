@@ -36,19 +36,25 @@ const VERIFY = `(() => {
   return bad.length === 0 ? 'OK' : 'BAD|' + bad.join(' || ');
 })()`;
 
+// v2.1.2 : drag Pointer Events (remplace DragEvents/DataTransfer).
 function dropExpr(fromIdx, targetExpr) {
   return `(() => {
-    const dt = new DataTransfer();
-    const evt = (type, el) => {
-      const e = new DragEvent(type, { bubbles: true, cancelable: true });
-      Object.defineProperty(e, 'dataTransfer', { value: dt });
+    const pe = (type, x, y, el) => {
+      const e = new PointerEvent(type, {
+        bubbles: true, cancelable: true, pointerId: 1, pointerType: 'mouse',
+        clientX: x, clientY: y, button: 0, buttons: type === 'pointerup' ? 0 : 1
+      });
       el.dispatchEvent(e);
     };
     const card = document.querySelector('#board-human .cell[data-idx="${fromIdx}"] .card');
-    evt('dragstart', card);
-    evt('dragover', ${targetExpr});
-    evt('drop', ${targetExpr});
-    evt('dragend', card);
+    const cr = card.getBoundingClientRect();
+    const sx = cr.left + cr.width / 2, sy = cr.top + cr.height / 2;
+    const target = ${targetExpr};
+    target.scrollIntoView(); // elementFromPoint est borné au viewport : cible à l'écran
+    const tr = target.getBoundingClientRect();
+    pe('pointerdown', sx, sy, card);
+    pe('pointermove', tr.left + tr.width / 2, tr.top + tr.height / 2, card);
+    pe('pointerup', tr.left + tr.width / 2, tr.top + tr.height / 2, target);
     return 'done';
   })()`;
 }

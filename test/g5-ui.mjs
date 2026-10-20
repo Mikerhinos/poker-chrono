@@ -23,20 +23,33 @@ async function waitForPage() {
   throw new Error('page jamais prête');
 }
 
-// Code page : dragstart sur la carte fromIdx, drop sur targetExpr, retour thenExpr.
+// Code page : drag Pointer Events sur la carte fromIdx (pointerdown/move/up),
+// dépôt au centre de targetExpr, retour thenExpr. v2.1.2 : API Pointer Events
+// (remplace DragEvents/DataTransfer, inopérante en tactile).
 function dropExpr(fromIdx, targetExpr, thenExpr) {
   return `(() => {
-    const dt = new DataTransfer();
-    const evt = (type, el) => {
-      const e = new DragEvent(type, { bubbles: true, cancelable: true });
-      Object.defineProperty(e, 'dataTransfer', { value: dt });
+    const pe = (type, x, y, el) => {
+      const e = new PointerEvent(type, {
+        bubbles: true, cancelable: true, pointerId: 1, pointerType: 'mouse',
+        clientX: x, clientY: y, button: 0, buttons: type === 'pointerup' ? 0 : 1
+      });
       el.dispatchEvent(e);
     };
     const card = document.querySelector('#board-human .cell[data-idx="${fromIdx}"] .card');
-    evt('dragstart', card);
-    evt('dragover', ${targetExpr});
-    evt('drop', ${targetExpr});
-    evt('dragend', card);
+    const cr = card.getBoundingClientRect();
+    const sx = cr.left + cr.width / 2, sy = cr.top + cr.height / 2;
+    const target = ${targetExpr};
+    let tx, ty;
+    if (target === document.body) {
+      tx = 4; ty = 4; // hors plateau : coin haut-gauche (zone du header, aucune .cell)
+    } else {
+      target.scrollIntoView(); // elementFromPoint est borné au viewport : amener la cible à l'écran
+      const tr = target.getBoundingClientRect();
+      tx = tr.left + tr.width / 2; ty = tr.top + tr.height / 2;
+    }
+    pe('pointerdown', sx, sy, card);
+    pe('pointermove', tx, ty, card); // déplacement > 4 px : le drag est armé
+    pe('pointerup', tx, ty, target);
     return ${thenExpr};
   })()`;
 }
