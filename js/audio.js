@@ -30,7 +30,9 @@
     ctx: null,
     musicGain: null,
     sfxGain: null,
-    musicOn: lsGet(KEY.music, '1') === '1',
+    /* v2.1.2 : musique OFF par défaut au chargement frais (aucune entrée LS) ;
+       une valeur LS existante ('1'/'0') continue de primer. SFX reste ON par défaut. */
+    musicOn: lsGet(KEY.music, '0') === '1',
     sfxOn: lsGet(KEY.sfx, '1') === '1',
     musicVol: clamp01(lsGet(KEY.mv, '0.7')),
     sfxVol: clamp01(lsGet(KEY.sv, '0.8')),

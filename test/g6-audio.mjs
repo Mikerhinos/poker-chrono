@@ -42,8 +42,13 @@ const run = async () => {
   check('AudioContext créé headless', init.ctx === true, JSON.stringify(init));
 
   // Toggles musique / SFX + persistance (l'entrée LS n'est écrite qu'au premier toggle).
-  const st0 = JSON.parse(await page(`JSON.stringify({ m: G.AUDIO.state.musicOn, s: G.AUDIO.state.sfxOn })`));
-  check('musique ON par défaut', st0.m === true, JSON.stringify(st0));
+  // v2.1.2 : musique OFF par défaut au chargement frais (aucune entrée LS) ; SFX ON inchangé.
+  const st0 = JSON.parse(await page(`JSON.stringify({ m: G.AUDIO.state.musicOn, s: G.AUDIO.state.sfxOn,
+    lm: localStorage.getItem('poker-chrono-audio-music'),
+    pressed: document.getElementById('music-toggle').getAttribute('aria-pressed'),
+    cls: document.getElementById('music-toggle').className })`));
+  check('musique OFF par défaut (chargement frais : musicOn === false, aucune entrée LS)', st0.m === false && st0.lm === null, JSON.stringify(st0));
+  check('toggle musique reflète OFF au chargement (aria-pressed=false, pas de classe .on)', st0.pressed === 'false' && !st0.cls.includes('on'), JSON.stringify(st0));
   check('SFX ON par défaut', st0.s === true);
   // v2.1 (fix réactivité) : 1er clic sur chaque canal = armement du son (force ON + AudioContext
   // dans le même tick), clics suivants = basculement normal.
