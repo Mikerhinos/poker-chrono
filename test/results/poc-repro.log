@@ -4,7 +4,7 @@ file: C:\Users\Mikerhinos\Poker-Chrono\index.html
 [ PO COK ] H2 : G.state absent — les 2 lignes du PoC lèvent une exception — {"hasState":false,"hasLastSeed":false,"threw":"TypeError"}
 [ PO COK ] H2b : snapshot UI en lecture seule — le muter ne touche pas le jeu
 [ PO COK ] M1 : tick(dt<0) et tick(NaN) refusés — timeLeft inchangé, chrono normale après — {"t0":20000,"after":20000,"afterPositive":19900,"ended":false}
-[ PO COK ] M2 : best « abc » → 0 — un score réel redevient un record — {"final":true,"stored":"30","human":30}
+[ PO COK ] M2 : best « abc » → 0 — un score réel redevient un record — {"final":true,"stored":"22","human":22}
 [ PO COK ] L1 : zéro innerHTML dans index.html + css/ + js/ (rendu par createElement/textContent) — occurrences=0
 FAILURES: 0
 RESULT: POCS NON REPRODUCTIBLES
