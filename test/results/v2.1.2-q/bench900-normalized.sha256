@@ -1,0 +1,6 @@
+Bench 900 — passage qualité v2.1.2 (tri alpha déclarations + clés d'objets)
+Procédure : ligne « total » retirée, « wall » → "111.5" (quotes préservées), rejoint par \n + \n final, SHA-256 UTF-8.
+hash run1 (trié) : 312841cd81911460d998d4b4d6a026cfab11b4c7efca4559a8443bc828bc357a
+hash run2 (trié) : 312841cd81911460d998d4b4d6a026cfab11b4c7efca4559a8443bc828bc357a
+référence v2.1.2 : 312841cd81911460d998d4b4d6a026cfab11b4c7efca4559a8443bc828bc357a
+identité : OUI

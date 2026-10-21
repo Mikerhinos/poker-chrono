@@ -1,0 +1,4 @@
+PORTE 23 — ESLint concaténation, passage qualité v2.1.2 (post-tri)
+Commande : scratch/eslint-gate23 — npm install eslint@9.39.2 @eslint/js@9.39.2 (86 packages) ; all.js = cat js/deck.js js/game.js js/i18n.js js/audio.js js/fx.js js/ui.js (ordre index.html L82-87) = 67 403 octets ; node_modules/eslint/bin/eslint.js all.js --config eslint.concat.config.mjs
+Sortie : (vide) — exit 0 → 0 erreur, 0 warning
+Conclusion : porte 23 PASSÉE sur l'arbre trié (idem v2.1.2)

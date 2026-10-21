@@ -7,12 +7,16 @@
   'use strict';
 
   const cv = document.getElementById('fx');
+
   if (!cv) return;
+
   const x2d = cv.getContext('2d');
+
   if (!x2d) return;
 
-  let W = 1;
   let H = 1;
+
+  let W = 1;
 
   function resize() {
     const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -24,20 +28,25 @@
     cv.style.height = H + 'px';
     x2d.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
+
   window.addEventListener('resize', resize);
+
   resize();
 
   /* Sprites de lueur radiale pré-rendus (compositing additif). */
   const COLORS = {
-    gold: '255,209,102',
-    red: '255,107,107',
-    green: '62,207,142',
     blue: '91,140,255',
-    white: '232,236,244',
-    cyan: '102,222,255'
+    cyan: '102,222,255',
+    gold: '255,209,102',
+    green: '62,207,142',
+    red: '255,107,107',
+    white: '232,236,244'
   };
+
   const SPR = 64;
+
   const sprites = {};
+
   for (const k in COLORS) {
     const c = document.createElement('canvas');
     c.width = c.height = SPR;
@@ -52,28 +61,25 @@
     sprites[k] = c;
   }
 
+  let next = 0;
+
+  const P = [];
+
   /* Pool fixe de particules : zéro allocation par frame. */
   const POOL = 240;
-  const P = [];
-  let next = 0;
+
   for (let i = 0; i < POOL; i++) {
     P.push({ x: 0, y: 0, vx: 0, vy: 0, life: 0, max: 1, size: 10, col: 'gold', on: false });
   }
 
-  function spawn(x, y, o) {
-    const p = P[next];
-    next = (next + 1) % POOL;
-    const ang = (o && o.angle !== undefined) ? o.angle : Math.random() * Math.PI * 2;
-    const sp = (o && o.speed !== undefined) ? o.speed : (0.05 + Math.random() * 0.35); // px/ms
-    p.x = x;
-    p.y = y;
-    p.vx = Math.cos(ang) * sp;
-    p.vy = Math.sin(ang) * sp - (o && o.up || 0);
-    p.max = p.life = (o && o.life !== undefined) ? o.life : (500 + Math.random() * 600);
-    p.size = (o && o.size !== undefined) ? o.size : (6 + Math.random() * 10);
-    p.col = (o && o.col) || 'gold';
-    p.on = true;
-  }
+  let fps = 0;
+
+  let frames = 0;
+
+  /* Boucle rAF : physique + rendu additif + mesure FPS (fenêtre 1 s). */
+  let last = (typeof performance !== 'undefined') ? performance.now() : 0;
+
+  let fpsWindowStart = last;
 
   function burst(x, y, n, o) {
     for (let i = 0; i < n; i++) spawn(x, y, o);
@@ -85,12 +91,6 @@
     const r = el.getBoundingClientRect();
     return [r.left + r.width / 2, r.top + r.height / 2];
   }
-
-  /* Boucle rAF : physique + rendu additif + mesure FPS (fenêtre 1 s). */
-  let last = (typeof performance !== 'undefined') ? performance.now() : 0;
-  let frames = 0;
-  let fpsWindowStart = last;
-  let fps = 0;
 
   function loop(now) {
     requestAnimationFrame(loop);
@@ -124,6 +124,22 @@
     x2d.globalAlpha = 1;
     x2d.globalCompositeOperation = 'source-over';
   }
+
+  function spawn(x, y, o) {
+    const p = P[next];
+    next = (next + 1) % POOL;
+    const ang = (o && o.angle !== undefined) ? o.angle : Math.random() * Math.PI * 2;
+    const sp = (o && o.speed !== undefined) ? o.speed : (0.05 + Math.random() * 0.35); // px/ms
+    p.x = x;
+    p.y = y;
+    p.vx = Math.cos(ang) * sp;
+    p.vy = Math.sin(ang) * sp - (o && o.up || 0);
+    p.max = p.life = (o && o.life !== undefined) ? o.life : (500 + Math.random() * 600);
+    p.size = (o && o.size !== undefined) ? o.size : (6 + Math.random() * 10);
+    p.col = (o && o.col) || 'gold';
+    p.on = true;
+  }
+
   requestAnimationFrame(loop);
 
   function shake() {
@@ -136,6 +152,7 @@
   }
 
   globalThis.G = globalThis.G || {};
+
   G.FX = {
     fps: () => fps,
     burst: burst,

@@ -537,3 +537,92 @@ Créés : `test/results/v2.1.2/` (logs intégraux de la re-run, bench 900, preuv
 12. `./COMPT-RENDU.md` — section v2.1.2 présente
 
 Version lisible : `MANIFESTE.md` (nouveau).
+
+## v2.1.2-q — Passage qualité : tri alphabétique des déclarations et clés d'objets + re-run intégrale (2026-10-21)
+
+**Demande** : standards par langage (W3C, ESLint), code très propre et pro, déclarations de variables et noms de fonctions classés par lettre croissante « quand c'est possible ». Contraintes absolues : bench 900 inchangé, deck verbatim de g1 inchangé, pas de push, pas de dépendance runtime (dev-only OK), pas de secret, site servi tel quel.
+
+### 1. Tri alphabétique (déclarations + clés d'objets)
+
+**Script** (scratch, hors repo) : `chrono-sort.mjs` (555 lignes) — parsing par ligne puis par caractère (`charKind[]`, zéro regex sur le code), items de niveau supérieur détectés (corps IIFE = `baseDepth=1` : `i18n.js` L10, `audio.js` L7, `fx.js` L6, `ui.js` L1 ; `deck.js` et `game.js` plain), tri **topologique** des déclarations (les initialiseurs peuvent référencer d'autres déclarations — ex. `A` → `KEY.sfx` dans `audio.js`) puis alphabétique, tri alphabétique des clés d'objets, préfixe protégé jusqu'au marqueur verbatim (« logique de jeu », `deck.js` L75) préservé byte-identique.
+
+**Validations pré-apply (dry-run, 6/6 vert)** : multiset de micro-tokens identique (découpage fin invariant), préfixe protégé inchangé, `node --check` OK sur le texte new, validation TDZ (aucun initialiseur ne référence une déclaration postérieure dans l'ordre new).
+
+**Apply** : `git checkout -- js/ && node chrono-sort.mjs apply` → rc=0, `apply-report.json` tous checks pass, `node --check` 6/6 OK.
+
+**Diff constaté** (`git diff --stat js/`) : 868 insertions / 817 suppressions sur 6 fichiers. Différences ligne-à-ligne vérifiées (multiset de lignes old vs new) : outre le réordonnancement, 3 reformats de présentation uniquement —
+1. **lignes vides normalisées** (l'assemblage insère une ligne vide entre les items : fx.js 13→30, ui.js 36→56, audio.js 21→29, deck.js 14→16, game.js 20→22, i18n.js 13→16) ;
+2. **virgule de fin d'objet cohérente** (toutes les clés suivies de `,`, y compris la dernière avant `}` — ex. `AI_INTERVAL` deck.js : old `facile, normal, difficile` sans virgule finale → new `difficile: 500, facile: 2000, normal: 1000` avec virgules ; style ES2017+, validé par ESLint) ;
+3. **objets single-line normalisés** (`' k: v, k: v '` — espaces uniques).
+Aucune perte/ajout de contenu sémantique : multiset de micro-tokens invariant (preuve dry-run), bench 900 byte-identique (§3), deck verbatim g1 byte-identique (41/41), 22 portes vertes, ESLint 0 erreur.
+
+**Deck verbatim (g1)** : `node test/results/v2.1.2/g1-adhoc.mjs < /dev/null` → **41 OK, 0 FAIL** (4 fonctions + 4 constantes BARÈME extraites par `test/lib.mjs`, extracteurs position-indépendants, préfixe protégé inchangé).
+
+### 2. Standards (W3C + ESLint)
+
+- **W3C (live)** : `node test/w3c.mjs < /dev/null` → 3 ok, 0 fail, validateur Nu : **0 erreur** (HTML/CSS servis tels quels — inchangés par le tri).
+- **ESLint porte 23** : ré-installation scratch `scratch/eslint-gate23` — `npm install eslint@9.39.2 @eslint/js@9.39.2` (86 packages, 12 s, dev-only, zéro changement repo). `all.js` = concaténation des 6 fichiers dans l'ordre de chargement `index.html` L82-87 (deck, game, i18n, audio, fx, ui) = **67 403 octets**. `node_modules/eslint/bin/eslint.js all.js --config eslint.concat.config.mjs` → **exit 0, sortie vide = 0 erreur, 0 warning** (arbre trié). Preuve : `test/results/v2.1.2-q/eslint-gate23-concat.txt`.
+
+### 3. Re-run intégrale post-tri
+
+**Node (plain)** :
+
+| Porte | Commande | Résultat |
+|---|---|---|
+| g1-adhoc | `node test/results/v2.1.2/g1-adhoc.mjs < /dev/null` | 41 OK, 0 FAIL |
+| g3-swap | `node test/g3-swap.js < /dev/null` | 24 OK, 0 FAIL |
+| go-logic | `node test/go-logic.mjs < /dev/null` | 18 ok, 0 fail |
+| max-board | `node test/max-board.mjs < /dev/null` | 7 OK, 0 FAIL |
+| g8-scan | `node test/g8-scan.mjs < /dev/null` | 24 OK, 0 FAIL |
+| g14-innertest | `node test/g14-innertest.mjs < /dev/null` | FAILURES: 0, RESULT OK |
+| w3c | `node test/w3c.mjs < /dev/null` | 3 ok, 0 fail, Nu 0 erreur |
+| bench 900 ×2 | `node test/g2g4-headless.js < /dev/null` | rc=0 ×2, déterministe |
+
+**Headless (ports 9501-9515, aucun conflit)** :
+
+| Porte | Résultat |
+|---|---|
+| g4-colors | 18 OK, 0 FAIL |
+| g5-run | 20 OK, 0 FAIL |
+| g5-ui | 20 OK, 0 FAIL |
+| g5-rownames | 4 OK, 0 FAIL |
+| g6-audio | 16 OK, 0 FAIL |
+| g7-fx | 8 OK, 0 FAIL |
+| g9-boards | FAILURES: 0, RESULT OK |
+| g11-noscore | FAILURES: 0, RESULT OK |
+| g12-seed | FAILURES: 0, RESULT OK |
+| g13-best | FAILURES: 0, RESULT OK |
+| g15-i18n | 20 ok, 0 fail |
+| go-ui | 11 ok, 0 fail |
+| go-ui-85 | 6 ok, 0 fail |
+| reactivity | 10 ok, 0 fail |
+| poc-repro | FAILURES: 0, POCS NON REPRODUCTIBLES (comportement attendu) |
+
+Logs intégraux : `test/results/v2.1.2-q/`.
+
+**Bench 900 (inviolable)** : 2 runs rc=0. Sorties brutes **byte-identiques à la référence v2.1.2** (`test/results/v2.1.2/bench900-run-v212.txt`) sauf lignes `total`/`wall` (temps réel). Normalisation (ligne `total` retirée, `"wall"` → `"111.5"` **quotes préservées**, rejoint par `\n` + `\n` final, SHA-256 UTF-8) → **`312841cd81911460d998d4b4d6a026cfab11b4c7efca4559a8443bc828bc357a` sur les 4 fichiers** (2 runs post-tri + 2 références v2.1.2) : identité v2.1.1 = v2.1.2 = post-tri **OUI**. Preuve : `test/results/v2.1.2-q/bench900-normalized.sha256`.
+
+**Confirmation indépendante (NI4NI, parallèle)** : re-run intégrale sur l'arbre trié ~00:57 (`scratch/v212-full-suite.sh` → `scratch/v212-ni4ni-suite.log`, DONE) : toutes les portes vertes (g4 18, g5-run 20, g5-ui 20, g5-rownames 4, g6 16, g7 8, g8 24, g9-g14 0 FAIL, g15/go-ui/go-ui-85/reactivity/poc ok, g3 24, go-logic 18, max-board 7, w3c 3, bench 136.09/167.89/209.57). Les 2 `exit=1` attendus : `g1-adhoc.mjs` (leur script passe `test/g1-adhoc.mjs`, le fichier étant à `test/results/v2.1.2/g1-adhoc.mjs`) et `g1-scores.js` (ENOENT `poker-rush/index.html`, état hérité de v2.1, porte ad hoc en lieu et place).
+
+### 4. g5 — branche prise (briefing SUIVI, confirmation demandée)
+
+**Branche 2 — artefact de test, résolue en v2.1.2, confirmée par la re-run post-tri.** Cause racine documentée : la cellule IA est **hors du viewport headless 758×482** (cy=666 > 482) → `elementFromPoint` renvoie null → le drop renvoyait `'out'` au lieu de `'ai_readonly'`. Fix : `scrollIntoView()` avant `getBoundingClientRect()` dans `test/g5-ui.mjs` + `test/g5-rownames.mjs` (test uniquement — le hit-test jeu `cellAtPoint`/`elementFromPoint` de `js/ui.js` est correct et **inchangé** ; assertions g5 inchangées, pas d'affaiblissement). Valeurs exactes : probe `test/results/v2.1.2/probe-ai-cell.mjs`. Re-run post-tri : g5-rownames 4/4, g5-run 20/20, g5-ui 20/20, go-ui 11/0 — le drop sur cellule IA passe toujours.
+
+### 5. g6-audio — musique OFF par défaut (item 6, confirmation)
+
+`js/audio.js` : `musicOn` **OFF par défaut au chargement frais** ; toggle `aria-pressed="false"` (`index.html`, inchangé par le tri). Re-run post-tri : **g6-audio 16 OK, 0 FAIL** (défaut OFF + toggle vérifiés). Re-run intégrale ensuite : §3 (toutes les portes + bench 900).
+
+### 6. Fichiers inattendus (investigués)
+
+- `PLAN-MULTIJOUEUR-2JOUERS.md` (untracked) : document de plan v2.2 multi-joueurs préparé par NI4NI le 2026-10-18 — **laisse tel quel, non committé**.
+- `scratch-hashes-v212.json` (untracked) : manifeste de hashs v2.1.2 de NI4NI — **laisse tel quel**.
+- `test/results/poc-repro.log`, `test/results/porte-13.log` (modifiés) : réécrits par la re-run parallèle de NI4NI (00:56-00:57) — **restaurés à HEAD** (baseline v2.1.2). Les valeurs de scores de `porte-13.log` varient d'un run à l'autre car le jeu in-DOM n'est pas seedé (seed temporel) — les assertions restent vertes (FAILURES: 0 sur les deux runs, old et new).
+
+### Tentatives (échecs / inconclusifs)
+
+- **Hash normalisé bench 900 — 1ère variante** : regex `"wall"\s*:\s*[0-9.]+` (sans quotes) ne matchait pas le format réel `"wall": "108.6"` (chaîne) → hash erroné `8a6df48b…`. Fix : remplacer par `"wall": "111.5"` (quotes préservées) → `312841cd…` reproduit sur les 4 fichiers de référence (procédure validée).
+- **Chemin `test/g1-adhoc.mjs`** : module error — le fichier est à `test/results/v2.1.2/g1-adhoc.mjs` (idem qu'en v2.1.2).
+- **`ls test/*.mjs test/*.js test/*.cjs` exit 2** : certains globs sans correspondance — ignoré.
+- **Installation scratch ESLint v2.1.2 introuvable** (nettoyage scratch) → réinstallation 86 packages (12 s), config copiée à côté de `node_modules` → résolution OK.
+- **Multiset de lignes old≠new** (non sémantique) : lignes vides, virgules de fin d'objet et objets single-line normalisés — documenté en §1, prouvé sans impact sémantique (multiset de micro-tokens invariant + bench byte-identique + 22 portes vertes).
+- **Rien d'autre d'omis** : toutes les portes re-run post-tri, logs dans `test/results/v2.1.2-q/`.

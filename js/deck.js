@@ -77,15 +77,30 @@
    * Humain : glisser-déposer sur son plateau (swap). IA : swaps sur son
    * plateau à cadence fixe (2 s / 1 s / 0,5 s selon difficulté).
    * ============================================================ */
-  const TIME_OPTIONS = [10, 20, 30, 60, 90];
-  const AI_INTERVAL = { facile: 2000, normal: 1000, difficile: 500 }; // ms
+  const AI_INTERVAL = { difficile: 500, facile: 2000, normal: 1000 }; // ms
 
   // Paires de cellules (i<j), ordre déterministe
   const PAIRS = [];
+
+  const TIME_OPTIONS = [10, 20, 30, 60, 90];
+
   for (let i = 0; i < 15; i++) for (let j = i + 1; j < 15; j++) PAIRS.push([i, j]);
 
-  function rowIdx(i) { return Math.floor(i / 5); }
   function colIdx(i) { return i % 5; }
+
+  /* Dérivation d'un flux 128 bits depuis le seed maître (splitmix par mot). */
+  function deriveStream(master, constant) {
+    const out = new Uint32Array(4);
+    for (let i = 0; i < 4; i++) {
+      let z = (master[i] ^ (constant + i * 0x9E3779B9)) >>> 0;
+      z = (z ^ (z >>> 16)) >>> 0;
+      z = Math.imul(z, 0x85EBCA6B) >>> 0;
+      z = (z ^ (z >>> 13)) >>> 0;
+      z = Math.imul(z, 0xC2B2AE35) >>> 0;
+      out[i] = z >>> 0;
+    }
+    return out;
+  }
 
   function mulberry32(seed) {
     let a = seed >>> 0;
@@ -96,6 +111,8 @@
       return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
   }
+
+  function rowIdx(i) { return Math.floor(i / 5); }
 
   /* xoshiro128** — PRNG 128 bits (fix H1) : le deck d'une partie réelle
    * n'est plus recouvrable par brute-force 2^32 depuis les cartes visibles. */
@@ -116,19 +133,3 @@
       return result / 4294967296;
     };
   }
-
-  /* Dérivation d'un flux 128 bits depuis le seed maître (splitmix par mot). */
-  function deriveStream(master, constant) {
-    const out = new Uint32Array(4);
-    for (let i = 0; i < 4; i++) {
-      let z = (master[i] ^ (constant + i * 0x9E3779B9)) >>> 0;
-      z = (z ^ (z >>> 16)) >>> 0;
-      z = Math.imul(z, 0x85EBCA6B) >>> 0;
-      z = (z ^ (z >>> 13)) >>> 0;
-      z = Math.imul(z, 0xC2B2AE35) >>> 0;
-      out[i] = z >>> 0;
-    }
-    return out;
-  }
-
-  
